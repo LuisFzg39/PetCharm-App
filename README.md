@@ -15,6 +15,7 @@ All commits should be short, clear, and use the following structure:
 - docs: documentation changes
 - style: formatting or style adjustments (no logic changes)
 - refactor: code improvements without altering behavior
+- chore: maintenance tasks (dependencies, configs, etc.)
 
 ## 3. Branching 
 This project will use **Gitflow** as the branching model
