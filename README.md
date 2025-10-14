@@ -27,7 +27,7 @@ This project will use **Gitflow** as the branching model
 - `release/{version}` - Pre-release branch for testing
 
 ### Guidelines
-- Always create branches from main.
+- Always create branches from dev.
 - Use descriptive names (avoid personal names).
 - Submit pull requests for review before merging.
 - Ensure code is tested before requesting merge.
