@@ -1,6 +1,10 @@
 function Login() {
     return (
-        <div className="min-h-screen bg-gray-900 flex">
+        <div className="min-h-screen flex relative">
+            <div
+                className="fixed inset-0 -z-10 bg-cover bg-center"
+                style={{ backgroundImage: 'url(/assets/background/login.svg)' }}
+            />
             {/* Lado izquierdo - Formulario */}
             <div className="flex-1 flex items-center justify-center px-8">
                 <div className="w-full max-w-md">
@@ -12,7 +16,7 @@ function Login() {
                             <input 
                                 type="text" 
                                 placeholder="Type your username..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
@@ -21,7 +25,7 @@ function Login() {
                             <input 
                                 type="password" 
                                 placeholder="Type your password..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
