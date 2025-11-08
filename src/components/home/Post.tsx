@@ -157,7 +157,7 @@ function Post({
 
                 <div className="comment-likes flex gap-[10px] text-[18px] font-[500] items-center">
                 <img
-                    src="/assets/Like-icon.svg"
+                    src="/assets/icons/Like-icon.svg"
                     alt="like"
                     className="w-[20px] h-[20px]"
                 />
