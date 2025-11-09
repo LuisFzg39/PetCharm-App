@@ -3,7 +3,6 @@
 - Luis Felipe
 - Juliana
 - Juan Pablo
-- Camila
 
 ## 1. Introduction
 This document defines the rules for contributing to PetCharm. The goal is to maintain clean code, professional collaboration, and a smooth workflow for all contributors.
