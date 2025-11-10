@@ -1,58 +1,73 @@
-# 😸PetCharm Code of Conduct🐕
-### Contributors
-- Luis Felipe
-- Juliana
-- Juan Pablo
+# React + TypeScript + Vite
 
-## 1. Introduction
-This document defines the rules for contributing to PetCharm. The goal is to maintain clean code, professional collaboration, and a smooth workflow for all contributors.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## 2. Commit Conventions
-All commits should be short, clear, and use the following structure:
-- feat: new feature
-- fix: bug fix
-- docs: documentation changes
-- style: formatting or style adjustments (no logic changes)
-- refactor: code improvements without altering behavior
-- chore: maintenance tasks (dependencies, configs, etc.)
+Currently, two official plugins are available:
 
-## 3. Branching 
-This project will use **Gitflow** as the branching model
-- `main` - Final product
-- `dev` - Main development branch
-- `feature/{feature-name}` - New features
-- `bugfix/{issue-number}` - Bug fixes
-- `hotfix/{issue-number}` - Critical production fixes
-- `release/{version}` - Pre-release branch for testing
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-### Guidelines
-- Always create branches from dev.
-- Use descriptive names (avoid personal names).
-- Submit pull requests for review before merging.
-- Ensure code is tested before requesting merge.
+## React Compiler
 
-## 4. Libraries 
-- Languages: TypeScript, HTML, CSS
-- Framework: React
-- Build Tool: Vite
-- Styling: Tailwind CSS
-- Package Manager: npm
-- Linting & Formatting: ESLint, Prettier
-- Hosting: Firebase or Netlify
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## 5. Coding Style
-- Code must be clean, consistent, and easy to read.
-- Variable and function names should be descriptive.
-- Remove unused code and comments.
-- Follow TypeScript and React best practices.
-- Respect the pixel-perfect design guidelines.
+## Expanding the ESLint configuration
 
-## 6. Communication and Collaboration
-- Share significant changes with the team.
-- Ask questions when in doubt and respond respectfully.
-- Decisions are made collectively.
-- Stay aligned on deadlines and responsibilities.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## 7. Accountability
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
 
-Failure to follow this code of conduct can slow progress and create unnecessary issues. Each contributor is responsible for maintaining quality and respecting team agreements.
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
