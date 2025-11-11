@@ -162,16 +162,14 @@ function Landing() {
           </div>
 
           {/* Right - Feature Cards */}
-          <div className="flex flex-col gap-6 max-w-[450px]">
+          <div className="flex flex-col gap-6 max-w-[500px]">
             {/* Pet Profiles Card */}
             <div className="bg-[#FFF4FD] rounded-[40px] p-8 border-2 border-[#5054DB] flex items-center gap-4">
               <div className="flex-1">
                 <h4 className="text-[32px] font-bold text-[#5054DB] mb-3" style={{ fontFamily: 'Satoshi, sans-serif' }}>Pet profiles</h4>
                 <p className="text-[#4D3D3D] text-[20px]" style={{ fontFamily: 'Satoshi, sans-serif' }}>Put your pet on the spotlight</p>
               </div>
-              <div className="w-[120px] h-[120px] bg-[#FFF4E6] rounded-full flex items-center justify-center text-5xl relative overflow-hidden">
-                🐱
-              </div>
+                <img src="/assets/vectors/graphic-elements/YelowCat.svg" alt="Cat Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
             </div>
 
             {/* Community Card */}
@@ -182,8 +180,7 @@ function Landing() {
               </div>
               <div className="relative w-[120px] h-[120px] flex items-center justify-center">
                 <div className="flex gap-2">
-                  <span className="text-6xl">🐶</span>
-                  <span className="text-6xl">🐱</span>
+                  <img src="/assets/vectors/graphic-elements/Animals.svg" alt="Dog Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
                 </div>
               </div>
             </div>
@@ -195,10 +192,8 @@ function Landing() {
                 <p className="text-[#4D3D3D] text-[20px]" style={{ fontFamily: 'Satoshi, sans-serif' }}>Give and get "Charms" on your posts</p>
               </div>
               <div className="relative w-[120px] h-[120px] flex items-center justify-center">
-                <div className="flex flex-col items-center gap-1">
-                  <span className="text-5xl">🐾</span>
-                  <span className="text-3xl">⭐</span>
-                </div>
+              <img src="/assets/vectors/graphic-elements/Footprint.svg" alt="Dog Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
+
               </div>
             </div>
           </div>
@@ -212,12 +207,12 @@ function Landing() {
           <div className="relative">
             {/* Cat illustration - bottom left */}
             <div className="absolute -bottom-10 -left-10 z-10 text-7xl">
-              🐱
+              <img src="/assets/vectors/graphic-elements/YelowCat.svg" alt="Cat Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
             </div>
             
             {/* Dog illustration - top right */}
             <div className="absolute -top-6 -right-6 z-10 text-7xl">
-              🐶
+              <img src="/assets/vectors/graphic-elements/PostDog.svg" alt="Dog Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
             </div>
 
             <div className="bg-[#CAACFF] rounded-[20px] shadow-[0px_3.279px_8.197px_3.279px_rgba(0,0,0,0.25)] w-[490px] h-[305px] flex flex-col items-center justify-center relative z-0">
@@ -239,12 +234,12 @@ function Landing() {
           <div className="relative">
             {/* Cat illustration - bottom right */}
             <div className="absolute -bottom-10 -right-10 z-10 text-7xl">
-              🐱
+            <img src="/assets/vectors/graphic-elements/Dog2.svg" alt="Cat Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
             </div>
             
             {/* Dog illustration - top left */}
             <div className="absolute -top-6 -left-6 z-10 text-7xl">
-              🐶
+            <img src="/assets/vectors/graphic-elements/Cat2.svg" alt="Dog Profile" className="w-[120px] h-[120px] flex items-center justify-center text-5xl relative overflow-hidden" />
             </div>
 
             <div className="bg-[#FCB43E] rounded-[20px] shadow-[0px_3.279px_8.197px_3.279px_rgba(0,0,0,0.25)] w-[490px] h-[305px] flex flex-col items-center justify-center relative z-0">
