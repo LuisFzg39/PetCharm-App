@@ -1,7 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../../store/hooks";
 
 function NavBarHome() {
+    const { currentUser } = useAuth();
+    
     return (
     <header className="w-full h-[80px] bg-[#fdfbff] flex items-center justify-between shadow-[0_4px_8px_0_rgba(0,0,0,0.25)]">
       {/* Logo */}
@@ -30,13 +33,13 @@ function NavBarHome() {
       {/* Profile Section */}
         <Link to="/profile" className="h-full w-[260px] rounded-l-[50px] flex items-center justify-start pl-[30px] gap-[15px] text-white bg-gradient-to-r from-[#5054DB] to-[#6E72ED] cursor-pointer hover:opacity-90 transition">
         <img
-          src="/assets/vectors/img/profile-pics/Pfp1.jpg" // replace later with profile picture
+          src={currentUser?.userPfp || '/assets/icons/Profile-icon.svg'}
             alt="Profile"
             className="rounded-full h-[55px] w-[55px] object-cover"
         />
         <div className="flex flex-col">
-            <h2 className="text-[18px] font-semibold leading-tight">valxcicat</h2>
-            <p className="text-[13px] font-light leading-tight">meowing 😸</p>
+            <h2 className="text-[18px] font-semibold leading-tight">{currentUser?.userName || 'Guest'}</h2>
+            <p className="text-[13px] font-light leading-tight">{currentUser?.userStatus || 'Welcome!'}</p>
         </div>
         </Link>
     </header>

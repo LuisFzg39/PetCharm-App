@@ -1,43 +1,28 @@
-import React, { useState } from "react";
+import React from "react";
 import CreatePost from "../components/home/CreatePost";
 import Post from "../components/home/Post";
-import usersData from "../data/users.json";
+import { usePosts } from "../store/hooks";
 
 function HomeFeed() {
-  const [posts, setPosts] = useState(usersData);
-
-  function handleCreatePost(newPostData: { imageUrl: any; caption: any; }) {
-    // Create the new post manually
-    const newPost = {
-      userName: "valxcicat",
-      userPfp: "/assets/vectors/img/profile-pics/Pfp1.jpg",
-      userStatus: "meowing 😸",
-      postImg: newPostData.imageUrl,
-      postCaption: newPostData.caption,
-      likes: 0,
-      commentsCount: 0,
-      comments: []
-    };
-
-    // Add the new post to the top of the list
-    setPosts([newPost, ...posts]);
-  }
+  const { posts } = usePosts();
 
   return (
     <div className="min-h-screen bg-[#f8f7ff] flex flex-col items-center pb-12">
       {/* Component to create a post */}
-      <CreatePost onCreatePost={handleCreatePost} />
+      <CreatePost />
 
       {/* Render all posts */}
-      {posts.map((post, index) => (
+      {posts.map((post) => (
         <Post
-          key={index}
+          key={post.id}
+          postId={post.id}
           userName={post.userName}
           userPfp={post.userPfp}
           userStatus={post.userStatus}
           postImg={post.postImg}
           postCaption={post.postCaption}
           likes={post.likes}
+          commentsCount={post.commentsCount}
           comments={post.comments}
         />
       ))}

@@ -1,14 +1,11 @@
-import React, { useState } from "react";
-
-type Comment = {
-    userName: string;
-    userPfp: string;
-    userStatus: string;
-    commentTxt: string;
-    likes: number;
-};
+import { useState } from "react";
+import { useAppDispatch, useAuth, useInteractions } from "../../store/hooks";
+import { toggleLikePost, toggleSavePost } from "../../store/slices/interactionsSlice";
+import { incrementPostLikes, decrementPostLikes, addComment } from "../../store/slices/postsSlice";
+import type { Comment } from "../../utils/types/Type";
 
 type PostProps = {
+    postId: string;
     userName: string;
     userPfp: string;
     userStatus: string;
@@ -20,6 +17,7 @@ type PostProps = {
 };
 
 function Post({
+    postId,
     userName,
     userPfp,
     userStatus,
@@ -29,8 +27,43 @@ function Post({
     commentsCount,
     comments,
 }: PostProps) {
-    const [isLiked, setIsLiked] = useState(false);
-    const [isSaved, setIsSaved] = useState(false);
+    const dispatch = useAppDispatch();
+    const { currentUser } = useAuth();
+    const { likedPosts, savedPosts } = useInteractions();
+    
+    const [commentInput, setCommentInput] = useState("");
+    
+    const isLiked = likedPosts[postId] || false;
+    const isSaved = savedPosts[postId] || false;
+    
+    const handleLikeClick = () => {
+        dispatch(toggleLikePost(postId));
+        if (isLiked) {
+            dispatch(decrementPostLikes(postId));
+        } else {
+            dispatch(incrementPostLikes(postId));
+        }
+    };
+    
+    const handleSaveClick = () => {
+        dispatch(toggleSavePost(postId));
+    };
+    
+    const handleSendComment = () => {
+        if (!commentInput.trim() || !currentUser) return;
+        
+        dispatch(addComment({
+            postId,
+            commentTxt: commentInput.trim(),
+            user: {
+                userName: currentUser.userName,
+                userPfp: currentUser.userPfp,
+                userStatus: currentUser.userStatus,
+            },
+        }));
+        
+        setCommentInput("");
+    };
 
     return (
     <article
@@ -79,7 +112,7 @@ function Post({
             {/* Likes */}
             <div
                 className="likes flex items-center gap-[8px] cursor-pointer"
-                onClick={() => setIsLiked(!isLiked)}
+                onClick={handleLikeClick}
             >
                 <img
                 src={
@@ -90,7 +123,7 @@ function Post({
                 alt="likes"
                 className="h-[35px] w-auto transition-transform duration-150 hover:scale-110"
                 />
-                <p className="m-0">{isLiked ? likes + 1 : likes}</p>
+                <p className="m-0">{likes}</p>
             </div>
 
             {/* Comments */}
@@ -114,7 +147,7 @@ function Post({
                 }
                 alt="save"
                 className="h-[35px] w-auto transition-transform duration-150 hover:scale-110"
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={handleSaveClick}
             />
             </div>
         </div>
@@ -172,9 +205,14 @@ function Post({
             <input
             type="text"
             placeholder="Write a comment..."
+            value={commentInput}
+            onChange={(e) => setCommentInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
             className="border-none bg-transparent outline-none text-[16px] font-[300] text-white w-[340px] placeholder:text-[#d3d3d3]"
             />
-            <button className="w-[130px] h-[34px] rounded-[40px] bg-[#FCB43E] text-white border-none font-[400]">
+            <button 
+            onClick={handleSendComment}
+            className="w-[130px] h-[34px] rounded-[40px] bg-[#FCB43E] text-white border-none font-[400] cursor-pointer hover:bg-[#eaa02b] transition-colors">
             Send
             </button>
         </div>

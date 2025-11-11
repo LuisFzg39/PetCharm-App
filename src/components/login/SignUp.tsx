@@ -1,4 +1,103 @@
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAppDispatch, useUsers } from '../../store/hooks';
+import { registerUser } from '../../store/slices/usersSlice';
+import { loginUser } from '../../store/slices/authSlice';
+
+// Avatares predeterminados para nuevos usuarios
+const DEFAULT_AVATARS = [
+    '/assets/vectors/img/profile-pics/Pfp2.jpg',
+    '/assets/vectors/img/profile-pics/Pfp3.jpg',
+    '/assets/vectors/img/profile-pics/Pfp4.jpg',
+    '/assets/vectors/img/profile-pics/Pfp5.jpg',
+    '/assets/vectors/img/profile-pics/Pfp6.jpg',
+];
+
 function SignUp() {
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const { registeredUsers } = useUsers();
+    
+    const [userName, setUserName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // Validaciones
+        if (!userName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters');
+            return;
+        }
+
+        // Verificar si el email ya está registrado
+        const emailExists = registeredUsers.some(
+            u => u.email.toLowerCase() === email.toLowerCase()
+        );
+
+        if (emailExists) {
+            setError('Email already registered');
+            return;
+        }
+
+        // Verificar si el username ya existe
+        const userNameExists = registeredUsers.some(
+            u => u.userName.toLowerCase() === userName.toLowerCase()
+        );
+
+        if (userNameExists) {
+            setError('Username already taken');
+            return;
+        }
+
+        // Seleccionar avatar aleatorio
+        const randomAvatar = DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
+
+        // Crear nuevo usuario
+        const newUser = {
+            email: email.trim(),
+            password: password,
+            userName: userName.trim(),
+            userPfp: randomAvatar,
+            userStatus: '🐾 New member',
+            bio: `Hi! I'm ${userName}`,
+            followersCount: 0,
+            followingCount: 0,
+        };
+
+        // Registrar usuario
+        dispatch(registerUser(newUser));
+
+        // Auto-login después del registro
+        dispatch(loginUser({
+            id: '', // Se generará en el slice
+            userName: newUser.userName,
+            userPfp: newUser.userPfp,
+            userStatus: newUser.userStatus,
+            bio: newUser.bio,
+            postsCount: 0,
+            followersCount: 0,
+            followingCount: 0,
+        }));
+
+        // Redirigir al home
+        navigate('/');
+    };
+
     return (
         <div className="min-h-screen flex">
             <div
@@ -21,13 +120,21 @@ function SignUp() {
                 <div className="w-full max-w-md">
                     <h1 className="text-4xl font-bold text-white mb-8">Create Account</h1>
                     
-                    <form className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        {error && (
+                            <div className="bg-red-500/20 border border-red-500 text-white px-4 py-3 rounded-full text-center text-sm">
+                                {error}
+                            </div>
+                        )}
+                        
                         <div>
-                            <label className="block text-white text-lg mb-2 text-left">Full Name</label>
+                            <label className="block text-white text-lg mb-2 text-left">Username</label>
                             <input 
                                 type="text" 
-                                placeholder="Type your full name..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                placeholder="Type your username..." 
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
@@ -36,7 +143,9 @@ function SignUp() {
                             <input 
                                 type="email" 
                                 placeholder="Type your email..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
@@ -45,7 +154,9 @@ function SignUp() {
                             <input 
                                 type="password" 
                                 placeholder="Type your password..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
@@ -54,28 +165,28 @@ function SignUp() {
                             <input 
                                 type="password" 
                                 placeholder="Confirm your password..." 
-                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 rounded-full border border-white bg-transparent text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-orange-400"
                             />
                         </div>
                         
                         <button 
                             type="submit" 
-                            className="w-64 text-white font-medium py-3 px-4 transition-colors"
+                            className="w-64 text-white font-medium py-3 px-4 transition-colors hover:opacity-90"
                             style={{ 
                                 backgroundColor: '#FCB43E',
                                 borderRadius: '50px'
                             }}
-                            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.backgroundColor = '#E6A237'}
-                            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.backgroundColor = '#FCB43E'}
                         >
                             Sign Up
                         </button>
                         
                         <div className="text-center">
                             <span className="text-white text-sm">Already have an account? </span>
-                            <a href="#" className="text-white underline hover:text-orange-400 transition-colors">
+                            <Link to="/login" className="text-white underline hover:text-orange-400 transition-colors">
                                 Log in
-                            </a>
+                            </Link>
                         </div>
                     </form>
                 </div>

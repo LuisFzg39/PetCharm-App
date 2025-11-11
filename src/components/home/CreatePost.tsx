@@ -1,10 +1,11 @@
 import React, { useState } from "react";
+import { useAppDispatch, useAuth } from "../../store/hooks";
+import { createPost } from "../../store/slices/postsSlice";
 
-type CreatePostProps = {
-  onCreatePost?: (payload: { imageUrl: string; caption: string }) => void;
-};
-
-function CreatePost({ onCreatePost }: CreatePostProps) {
+function CreatePost() {
+  const dispatch = useAppDispatch();
+  const { currentUser } = useAuth();
+  
   const [isExpanded, setIsExpanded] = useState(false);
   const [pictureUrl, setPictureUrl] = useState("");
   const [caption, setCaption] = useState("");
@@ -16,17 +17,22 @@ function CreatePost({ onCreatePost }: CreatePostProps) {
       return;
     }
 
+    if (!currentUser) {
+      alert("You must be logged in to create a post!");
+      return;
+    }
+
     try {
-      // call parent handler only if provided
-      if (typeof onCreatePost === "function") {
-        onCreatePost({ imageUrl: pictureUrl.trim(), caption: caption.trim() });
-      } else {
-        // fallback: if parent didn't pass a handler, just log it (won't crash)
-        console.warn("onCreatePost not provided — new post:", {
-          imageUrl: pictureUrl.trim(),
-          caption: caption.trim(),
-        });
-      }
+      // Dispatch action to create post
+      dispatch(createPost({
+        imageUrl: pictureUrl.trim(),
+        caption: caption.trim(),
+        user: {
+          userName: currentUser.userName,
+          userPfp: currentUser.userPfp,
+          userStatus: currentUser.userStatus,
+        },
+      }));
 
       // reset
       setPictureUrl("");
@@ -48,7 +54,7 @@ function CreatePost({ onCreatePost }: CreatePostProps) {
       <div className="flex relative z-10">
         {/* Text Content */}
         <div className="ml-10 mt-7">
-          <h1 className="text-4xl font-black mb-2.5">Hey, valxcicat!</h1>
+          <h1 className="text-4xl font-black mb-2.5">Hey, {currentUser?.userName || 'friend'}!</h1>
           <p className="text-[17px] font-normal">
             Got a special moment with your pet? Share it with the <br />
             community and let your furry friend shine today!
