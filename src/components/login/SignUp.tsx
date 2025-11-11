@@ -95,7 +95,7 @@ function SignUp() {
         }));
 
         // Redirigir al home
-        navigate('/');
+        navigate('/home');
     };
 
     return (

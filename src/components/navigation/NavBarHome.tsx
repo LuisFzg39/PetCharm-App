@@ -8,7 +8,7 @@ function NavBarHome() {
     return (
     <header className="w-full h-[80px] bg-[#fdfbff] flex items-center justify-between shadow-[0_4px_8px_0_rgba(0,0,0,0.25)]">
       {/* Logo */}
-        <Link to="/" className="flex items-center h-full cursor-pointer">
+        <Link to="/home" className="flex items-center h-full cursor-pointer">
         <img
             src="/assets/vectors/logos/Logo-navbar.svg"
             alt="PetC Logo"

@@ -15,19 +15,23 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Ruta predeterminada - Landing */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/landing" element={<Landing />} />
+
         {/* Rutas públicas */}
         <Route 
           path="/login" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+          element={isAuthenticated ? <Navigate to="/home" replace /> : <Login />} 
         />
         <Route 
           path="/signup" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <SignUp />} 
+          element={isAuthenticated ? <Navigate to="/home" replace /> : <SignUp />} 
         />
         
         {/* Rutas protegidas */}
         <Route 
-          path="/" 
+          path="/home" 
           element={
             <ProtectedRoute>
               <div>
@@ -48,21 +52,6 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/" element={
-          <div>
-            <NavBarHome />
-            <HomeFeed />
-          </div>
-        } />
-        <Route path="/profile" element={
-          <div>
-            <NavBarHome />
-            <Profile />
-          </div>
-        } />
       </Routes>
     </Router>
   );
