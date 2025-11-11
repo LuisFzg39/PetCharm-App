@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/login/Login'
 import SignUp from './components/login/SignUp'
 import Profile from './components/profile/Profile'
+import Landing from './components/landing/Landing'
 import NavBarHome from "./components/navigation/NavBarHome";
 import HomeFeed from "./pages/HomeFeed";
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -47,6 +48,21 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/landing" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/" element={
+          <div>
+            <NavBarHome />
+            <HomeFeed />
+          </div>
+        } />
+        <Route path="/profile" element={
+          <div>
+            <NavBarHome />
+            <Profile />
+          </div>
+        } />
       </Routes>
     </Router>
   );
