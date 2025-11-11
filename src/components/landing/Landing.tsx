@@ -143,49 +143,62 @@ function Landing() {
 
         <div className="relative z-10 flex items-center justify-between px-20 py-16 min-h-[1500px]">
           {/* Left - Laptop Mockup */}
-          <div className="max-w-[550px]">
+          <div className="max-w-[1250px] mt-50 relative">
+            {/* Pattern Background - Diagonal */}
+            <div className="absolute left-[60%] bottom-0 translate-x-[-50%] w-[1300px] h-[1300px] pointer-events-none opacity-40" style={{ transform: 'translateX(-50%) rotate(-35deg)' }}>
+              <img
+                src="/assets/vectors/patterns/CreatePostPattern.svg"
+                alt="Pattern"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            
+            {/* Laptop */}
             <img
               src="/assets/vectors/img/mockups/Laptop-mockup.svg"
               alt="Laptop Mockup"
-              className="w-full h-auto"
+              className="w-full h-auto relative z-10"
             />
           </div>
 
           {/* Right - Feature Cards */}
           <div className="flex flex-col gap-6 max-w-[450px]">
             {/* Pet Profiles Card */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg flex items-center gap-4">
+            <div className="bg-[#FFF4FD] rounded-[40px] p-8 border-2 border-[#5054DB] flex items-center gap-4">
               <div className="flex-1">
-                <h4 className="text-2xl font-bold text-[#6366f1] mb-2">Pet profiles</h4>
-                <p className="text-gray-700">Put your pet on the spotlight</p>
+                <h4 className="text-[32px] font-bold text-[#5054DB] mb-3" style={{ fontFamily: 'Satoshi, sans-serif' }}>Pet profiles</h4>
+                <p className="text-[#4D3D3D] text-[20px]" style={{ fontFamily: 'Satoshi, sans-serif' }}>Put your pet on the spotlight</p>
               </div>
-              <div className="w-20 h-20 bg-[#FFF4E6] rounded-2xl flex items-center justify-center text-4xl">
+              <div className="w-[120px] h-[120px] bg-[#FFF4E6] rounded-full flex items-center justify-center text-5xl relative overflow-hidden">
                 🐱
               </div>
             </div>
 
             {/* Community Card */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg flex items-center gap-4">
+            <div className="bg-[#FFF4FD] rounded-[40px] p-8 border-2 border-[#5054DB] flex items-center gap-4 relative overflow-hidden">
               <div className="flex-1">
-                <h4 className="text-2xl font-bold text-[#6366f1] mb-2">Community</h4>
-                <p className="text-gray-700">Connect with pet lovers everywhere.</p>
+                <h4 className="text-[32px] font-bold text-[#5054DB] mb-3" style={{ fontFamily: 'Satoshi, sans-serif' }}>Community</h4>
+                <p className="text-[#4D3D3D] text-[20px]" style={{ fontFamily: 'Satoshi, sans-serif' }}>Connect with pet lovers everywhere.</p>
               </div>
-              <div className="w-20 h-20 bg-[#F0E6FF] rounded-2xl flex items-center justify-center">
-                <div className="flex gap-1">
-                  <span className="text-2xl">🐶</span>
-                  <span className="text-2xl">🐱</span>
+              <div className="relative w-[120px] h-[120px] flex items-center justify-center">
+                <div className="flex gap-2">
+                  <span className="text-6xl">🐶</span>
+                  <span className="text-6xl">🐱</span>
                 </div>
               </div>
             </div>
 
             {/* Charms Card */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg flex items-center gap-4">
+            <div className="bg-[#FFF4FD] rounded-[40px] p-8 border-2 border-[#5054DB] flex items-center gap-4 relative overflow-hidden">
               <div className="flex-1">
-                <h4 className="text-2xl font-bold text-[#6366f1] mb-2">Charms</h4>
-                <p className="text-gray-700">Give and get "Charms" on your posts</p>
+                <h4 className="text-[32px] font-bold text-[#5054DB] mb-3" style={{ fontFamily: 'Satoshi, sans-serif' }}>Charms</h4>
+                <p className="text-[#4D3D3D] text-[20px]" style={{ fontFamily: 'Satoshi, sans-serif' }}>Give and get "Charms" on your posts</p>
               </div>
-              <div className="w-20 h-20 bg-[#E6F0FF] rounded-2xl flex items-center justify-center text-4xl">
-                🐾
+              <div className="relative w-[120px] h-[120px] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-5xl">🐾</span>
+                  <span className="text-3xl">⭐</span>
+                </div>
               </div>
             </div>
           </div>
@@ -193,136 +206,211 @@ function Landing() {
       </section>
 
       {/* Auth Cards Section */}
-      <section className="w-full bg-[#f5f0f0] py-20 px-20">
-        <div className="flex items-center justify-center gap-12">
+      <section className="w-full bg-[#f5f0f0] py-20 px-20 relative">
+        <div className="flex items-center justify-center gap-16 max-w-[1400px] mx-auto">
           {/* Log In Card */}
-          <div className="bg-[#B794FF] rounded-3xl p-10 shadow-xl text-center max-w-[380px] relative">
-            <div className="absolute -bottom-10 -left-10">
-              <div className="w-24 h-24 text-6xl">🐱</div>
+          <div className="relative">
+            {/* Cat illustration - bottom left */}
+            <div className="absolute -bottom-10 -left-10 z-10 text-7xl">
+              🐱
             </div>
-            <div className="absolute -top-10 -right-10">
-              <div className="w-24 h-24 text-6xl">🐶</div>
+            
+            {/* Dog illustration - top right */}
+            <div className="absolute -top-6 -right-6 z-10 text-7xl">
+              🐶
             </div>
-            <h3 className="text-4xl font-bold text-white mb-4">Log In</h3>
-            <p className="text-white mb-6">Welcome back—your pet's world is waiting!</p>
-            <Link to="/login">
-              <button className="px-10 py-3 rounded-full bg-[#FF43A1] text-white text-lg font-semibold hover:bg-[#e63a8f] transition-colors shadow-lg">
-                Access now
-              </button>
-            </Link>
+
+            <div className="bg-[#CAACFF] rounded-[20px] shadow-[0px_3.279px_8.197px_3.279px_rgba(0,0,0,0.25)] w-[490px] h-[305px] flex flex-col items-center justify-center relative z-0">
+              <h3 className="text-[36px] font-bold text-[#1D1D1B] mb-4" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                Log In
+              </h3>
+              <p className="text-[20px] text-[#1D1D1B] mb-8 text-center max-w-[270px]" style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 500 }}>
+                Welcome back—your pet's world is waiting!
+              </p>
+              <Link to="/login">
+                <button className="bg-[#FF43A1] text-[#FFF4FD] px-10 py-3 rounded-[20px] text-[16px] font-medium hover:bg-[#e63a8f] transition-colors" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                  Access now
+                </button>
+              </Link>
+            </div>
           </div>
 
           {/* Sign Up Card */}
-          <div className="bg-[#FCB43E] rounded-3xl p-10 shadow-xl text-center max-w-[380px] relative">
-            <div className="absolute -bottom-10 -right-10">
-              <div className="w-24 h-24 text-6xl">🐶</div>
+          <div className="relative">
+            {/* Cat illustration - bottom right */}
+            <div className="absolute -bottom-10 -right-10 z-10 text-7xl">
+              🐱
             </div>
-            <div className="absolute -top-10 -left-10">
-              <div className="w-24 h-24 text-6xl">🐱</div>
+            
+            {/* Dog illustration - top left */}
+            <div className="absolute -top-6 -left-6 z-10 text-7xl">
+              🐶
             </div>
-            <h3 className="text-4xl font-bold text-white mb-4">Sign Up</h3>
-            <p className="text-white mb-6">Join PetCharm and let your pet shine!</p>
-            <Link to="/signup">
-              <button className="px-10 py-3 rounded-full bg-[#6366f1] text-white text-lg font-semibold hover:bg-[#5558e3] transition-colors shadow-lg">
-                Register now
-              </button>
-            </Link>
+
+            <div className="bg-[#FCB43E] rounded-[20px] shadow-[0px_3.279px_8.197px_3.279px_rgba(0,0,0,0.25)] w-[490px] h-[305px] flex flex-col items-center justify-center relative z-0">
+              <h3 className="text-[36px] font-bold text-[#1D1D1B] mb-4" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                Sign Up
+              </h3>
+              <p className="text-[20px] text-[#1D1D1B] mb-8 text-center max-w-[270px]" style={{ fontFamily: 'Satoshi, sans-serif', fontWeight: 500 }}>
+                Join PetCharm and let your pet shine!
+              </p>
+              <Link to="/signup">
+                <button className="bg-[#4A67DB] text-[#FFF4FD] px-10 py-3 rounded-[20px] text-[16px] font-medium hover:bg-[#3d57c4] transition-colors" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+                  Register now
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Interact Section */}
-      <section className="w-full bg-[#f5f0f0] py-20 px-20">
-        <div className="text-center mb-12">
-          <h2 className="text-5xl font-bold">
-            <span className="text-[#6366f1]">Interact with</span>{" "}
+      <section className="w-full bg-[#f5f0f0] py-20 px-20 relative overflow-hidden">
+        {/* Decorative Circles */}
+        <div className="absolute -left-20 top-32 w-[217px] h-[217px] rounded-full bg-[#E5D9FF] opacity-50"></div>
+        <div className="absolute -right-12 bottom-12 w-[143px] h-[143px] rounded-full bg-[#FFE5F5] opacity-50"></div>
+        <div className="absolute right-1/4 bottom-12 w-[46px] h-[46px] rounded-full bg-[#FFE5D9] opacity-50"></div>
+        <div className="absolute left-24 bottom-4 w-[46px] h-[46px] rounded-full bg-[#FFF4D9] opacity-50"></div>
+
+        <div className="text-center mb-16">
+          <h2 className="text-[70px] font-bold leading-tight" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+            <span className="text-[#5054DB]">Interact with</span>
+            <br />
             <span className="text-[#FF43A1]">others!</span>
           </h2>
         </div>
 
-        <div className="flex items-center justify-center gap-12 relative">
+        <div className="flex items-center justify-center relative min-h-[600px]">
           {/* Left Testimonial */}
-          <div className="bg-white border-2 border-[#6366f1] rounded-2xl p-4 shadow-lg max-w-[250px] absolute left-32 top-20">
-            <p className="text-[#6366f1] italic">"This is honestly one of the funniest and cutest things I've seen today"</p>
+          <div className="bg-white rounded-[20px] p-6 shadow-lg max-w-[280px] absolute left-12 top-32 z-20">
+            <p className="text-[#5054DB] text-[15px] leading-relaxed" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+              "This is honestly one of the funniest and cutest things I've seen today."
+            </p>
           </div>
 
           {/* Center - Devices Mockup */}
-          <div className="relative">
+          <div className="relative z-10">
+            {/* Laptop */}
             <img
               src="/assets/vectors/img/mockups/MacBook-mockup.svg"
-              alt="Devices Mockup"
-              className="w-[700px] h-auto"
+              alt="Laptop Mockup"
+              className="w-[679px] h-auto relative z-10"
             />
-            <div className="absolute -top-8 -left-8 text-4xl">⭐</div>
-            <div className="absolute -bottom-8 left-12 text-4xl">✨</div>
+            {/* Phone */}
+            <img
+              src="/assets/vectors/img/mockups/Phones-mockup.svg"
+              alt="Phone Mockup"
+              className="w-[350px] h-auto absolute -left-32 bottom-8 z-20"
+            />
+            
+            {/* Decorative Stars/Sparkles */}
+            <div className="absolute top-12 -left-16 text-[88px] z-0">✨</div>
+            <div className="absolute -bottom-4 left-48 text-[88px] z-0">✨</div>
           </div>
 
           {/* Right Testimonial */}
-          <div className="bg-white border-2 border-[#6366f1] rounded-2xl p-4 shadow-lg max-w-[250px] absolute right-32 top-32">
-            <p className="text-[#6366f1] italic">"Mario & Luigi never looked this good.!"</p>
+          <div className="bg-white rounded-[20px] p-6 shadow-lg max-w-[233px] absolute right-32 top-48 z-20">
+            <p className="text-[#5054DB] text-[15px] leading-relaxed" style={{ fontFamily: 'Satoshi, sans-serif' }}>
+              "Mario & Luigi never looked this good!."
+            </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="w-full relative min-h-[400px]">
+      <footer className="w-full relative min-h-[431px]">
         {/* Footer Background */}
-        <img
-          src="/assets/vectors/img/mockups/footer_azul.svg"
-          alt="Footer Background"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <div className="absolute inset-0 w-full h-full bg-[#5054DB]">
+          <img
+            src="/assets/vectors/img/mockups/footer_azul.svg"
+            alt="Footer Background"
+            className="w-full h-full object-fill"
+          />
+        </div>
 
-        <div className="relative z-10 px-20 py-16">
-          <div className="flex justify-between text-white">
+        <div className="relative z-10 py-16">
+          <div className="max-w-[1263px] mx-auto px-11 flex justify-between text-white">
             {/* Exclusive */}
             <div className="flex flex-col">
-              <h4 className="text-xl font-bold mb-4">Exclusive</h4>
-              <p className="mb-4">Subscribe to our newsletter</p>
-              <div className="flex gap-2">
+              <h4 className="text-[25px] font-medium mb-[67px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.5px' }}>
+                Exclusive
+              </h4>
+              <p className="text-[15px] mb-6 max-w-[146px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Subscribe to our newsletter
+              </p>
+              <div className="relative w-[225px]">
                 <input
                   type="email"
-                  placeholder="Enter your email..."
-                  className="px-4 py-2 rounded-full bg-transparent border-2 border-white text-white placeholder:text-white/70 outline-none"
+                  placeholder="Enter you email..."
+                  className="w-full px-3 py-2 rounded-[4px] bg-transparent border border-white text-white text-[15px] placeholder:text-white/70 placeholder:text-center outline-none"
+                  style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}
                 />
-                <button className="px-4 py-2 rounded-full bg-white text-[#6366f1] font-semibold hover:bg-gray-100 transition-colors">
-                  →
+                <button className="absolute right-2 top-1/2 -translate-y-1/2 text-white text-xl">
+                  ➤
                 </button>
               </div>
             </div>
 
             {/* Contact */}
             <div className="flex flex-col">
-              <h4 className="text-xl font-bold mb-4">Contact</h4>
-              <p className="mb-2">Cra. 7 #78-90, Bogotá</p>
-              <p className="mb-2">petcharm@gmail.com</p>
-              <p>+57-301-6414482</p>
+              <h4 className="text-[25px] font-medium mb-[65px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.5px' }}>
+                Contact
+              </h4>
+              <p className="text-[15px] mb-[38px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Cra. 7 #78-96, Bogotá
+              </p>
+              <p className="text-[15px] mb-[38px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                petcharm@gmail.com
+              </p>
+              <p className="text-[15px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                +57-301-6414482
+              </p>
             </div>
 
             {/* Account */}
             <div className="flex flex-col">
-              <h4 className="text-xl font-bold mb-4">Account</h4>
-              <Link to="/profile" className="mb-2 hover:underline">My Account</Link>
-              <Link to="/login" className="mb-2 hover:underline">Login / Register</Link>
-              <Link to="/" className="mb-2 hover:underline">Cart</Link>
-              <Link to="/" className="hover:underline">Shop</Link>
+              <h4 className="text-[25px] font-medium mb-[65px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.5px' }}>
+                Account
+              </h4>
+              <Link to="/profile" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                My Account
+              </Link>
+              <Link to="/login" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Login / Register
+              </Link>
+              <Link to="/" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Cart
+              </Link>
+              <Link to="/" className="text-[15px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Shop
+              </Link>
             </div>
 
             {/* Quick Link */}
             <div className="flex flex-col">
-              <h4 className="text-xl font-bold mb-4">Quick Link</h4>
-              <a href="#" className="mb-2 hover:underline">Privacy Policy</a>
-              <a href="#" className="mb-2 hover:underline">Terms Of Use</a>
-              <a href="#" className="mb-2 hover:underline">FAQ</a>
-              <a href="#" className="hover:underline">Contact</a>
+              <h4 className="text-[25px] font-medium mb-[65px]" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.5px' }}>
+                Quick Link
+              </h4>
+              <a href="#" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Privacy Policy
+              </a>
+              <a href="#" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Terms Of Use
+              </a>
+              <a href="#" className="text-[15px] mb-[38px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                FAQ
+              </a>
+              <a href="#" className="text-[15px] hover:underline" style={{ fontFamily: 'Satoshi, sans-serif', letterSpacing: '-0.3px' }}>
+                Contact
+              </a>
             </div>
 
             {/* Logo */}
-            <div className="flex items-center">
+            <div className="flex items-end relative">
               <img
                 src="/assets/vectors/logos/Logo-navbar.svg"
                 alt="PetCharm Logo"
-                className="h-[60px] w-auto"
+                className="w-[155px] h-auto"
               />
             </div>
           </div>
