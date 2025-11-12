@@ -6,7 +6,7 @@ import Profile from './components/profile/Profile'
 import UserProfile from './components/profile/UserProfile'
 import Landing from './components/landing/Landing'
 import NavBarHome from "./components/navigation/NavBarHome";
-import HomeFeed from "./pages/HomeFeed";
+import Home from "./components/home/Home";
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { useAuth } from './store/hooks';
 
@@ -35,9 +35,11 @@ function App() {
           path="/home" 
           element={
             <ProtectedRoute>
-              <div>
-                <NavBarHome />
-                <HomeFeed />
+              <div className="lg:flex lg:flex-col">
+                <div className="hidden lg:block">
+                  <NavBarHome />
+                </div>
+                <Home />
               </div>
             </ProtectedRoute>
           } 
@@ -46,8 +48,10 @@ function App() {
           path="/profile/:username" 
           element={
             <ProtectedRoute>
-              <div>
-                <NavBarHome />
+              <div className="lg:flex lg:flex-col">
+                <div className="hidden lg:block">
+                  <NavBarHome />
+                </div>
                 <UserProfile />
               </div>
             </ProtectedRoute>
@@ -57,8 +61,10 @@ function App() {
           path="/profile" 
           element={
             <ProtectedRoute>
-              <div>
-                <NavBarHome />
+              <div className="lg:flex lg:flex-col">
+                <div className="hidden lg:block">
+                  <NavBarHome />
+                </div>
                 <Profile />
               </div>
             </ProtectedRoute>

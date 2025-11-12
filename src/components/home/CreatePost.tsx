@@ -46,29 +46,47 @@ function CreatePost() {
 
   return (
     <section
-      className={`w-[70%] ${
-        isExpanded ? "h-[350px]" : "h-[170px]"
-      } bg-[#FF43A1] text-white rounded-[25px] overflow-hidden relative mx-auto mt-20 transition-all duration-500 ease-in-out`}
+      className={`w-full lg:w-[70%] ${
+        isExpanded ? "h-auto min-h-[350px] lg:h-[350px]" : "h-[100px] lg:h-auto lg:min-h-[140px]"
+      } bg-[#FF43A1] text-white rounded-[20px] lg:rounded-[25px] overflow-hidden relative mx-auto mt-4 lg:mt-20 transition-all duration-500 ease-in-out px-5 lg:px-0`}
     >
-      {/* Content */}
-      <div className="flex relative z-10">
+      {/* Content - Header Section */}
+      <div className="flex items-start justify-between relative z-10 px-4 lg:px-10 py-3 lg:py-4">
         {/* Text Content */}
-        <div className="ml-10 mt-7">
-          <h1 className="text-4xl font-black mb-2.5">Hey, {currentUser?.userName || 'friend'}!</h1>
-          <p className="text-[17px] font-normal">
+        <div className="flex-1">
+          <h1 className="text-2xl lg:text-4xl font-black">Hey, {currentUser?.userName || 'friend'}!</h1>
+          {/* Texto descriptivo solo en desktop - visible en ambas vistas */}
+          <p className="hidden lg:block text-[17px] font-normal mt-2">
             Got a special moment with your pet? Share it with the <br />
             community and let your furry friend shine today!
           </p>
         </div>
 
-        {/* Toggle Button */}
+        {/* Toggle Button - Posición diferente según estado */}
+        {!isExpanded && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="hidden lg:block w-[220px] h-[42px] rounded-[40px] bg-[#FCB43E] text-white border-none text-lg font-bold hover:bg-[#eaa02b] transition-colors mt-2"
+          >
+            Post your pet
+          </button>
+        )}
+        {isExpanded && (
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="hidden lg:block absolute top-6 right-8 w-[150px] h-[38px] rounded-[40px] bg-[#FCB43E] text-white border-none text-lg font-bold hover:bg-[#eaa02b] transition-colors z-20"
+          >
+            Cancel
+          </button>
+        )}
+        {/* Botón móvil */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className={`absolute transition-all duration-300 ${
+          className={`lg:hidden transition-all duration-300 ${
             isExpanded
-              ? "top-6 right-8 w-[150px] h-[38px]"
-              : "ml-[780px] mt-[90px] w-[220px] h-[42px]"
-          } rounded-[40px] bg-[#FCB43E] text-white border-none text-lg font-bold hover:bg-[#eaa02b]`}
+              ? "w-[100px] h-[32px] text-sm"
+              : "w-[140px] h-[36px] text-sm"
+          } rounded-[40px] bg-[#FCB43E] text-white border-none font-bold hover:bg-[#eaa02b]`}
         >
           {isExpanded ? "Cancel" : "Post your pet"}
         </button>
@@ -76,31 +94,35 @@ function CreatePost() {
 
       {/* Expanded Section */}
       {isExpanded && (
-        <div className="flex items-start gap-4 ml-10 mt-8 relative z-10">
-          {/* Upload Picture Box */}
-          <div className="flex flex-col items-start">
-            <p className="font-semibold text-white mb-2">Add a picture</p>
-            <div className="w-[140px] h-[120px] flex items-center justify-center">
+        <div className="flex flex-col lg:flex-row items-start gap-4 px-4 lg:px-10 pb-4 lg:pb-12 relative z-10">
+          {/* Upload Picture Box - Más angosto (reducido 40px) */}
+          <div className="flex flex-col items-start w-full lg:w-auto">
+            <p className="font-semibold text-white mb-2 text-sm lg:text-base">Add a picture</p>
+            <div className="w-full lg:w-[240px] flex items-center justify-center">
               <textarea
                 value={pictureUrl}
                 onChange={(e) => setPictureUrl(e.target.value)}
                 placeholder="Picture Url..."
-                className="w-[380px] h-[120px] bg-transparent border-2 border-white rounded-[15px] p-4 text-white placeholder:text-[#ffbcd9] resize-none outline-none"
+                className="w-full lg:w-[240px] h-[100px] lg:h-[120px] bg-transparent border-2 border-white rounded-[15px] p-3 lg:p-4 text-white placeholder:text-[#ffbcd9] resize-none outline-none text-sm lg:text-base"
               />
             </div>
           </div>
 
-          {/* Text Area + Button */}
-          <div className="flex relative mt-[30px] w-[810px]">
+          {/* Text Area - Reducido a la mitad del ancho original, alineado horizontalmente */}
+          <div className="flex flex-col items-start w-full lg:w-auto lg:pt-[30px]">
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Type something..."
-              className="w-[340px] h-[120px] bg-transparent border-2 border-white rounded-[15px] p-4 text-white placeholder:text-[#ffbcd9] resize-none outline-none"
+              className="w-full lg:w-[170px] h-[100px] lg:h-[120px] bg-transparent border-2 border-white rounded-[15px] p-3 lg:p-4 text-white placeholder:text-[#ffbcd9] resize-none outline-none text-sm lg:text-base"
             />
+          </div>
+
+          {/* Botón "Post your pet" - En la parte inferior de la card */}
+          <div className="w-full lg:w-auto flex justify-end lg:absolute lg:bottom-4 lg:right-8">
             <button
               onClick={handlePostClick}
-              className="absolute bottom-0 right-0 w-[220px] h-[42px] rounded-[40px] bg-[#FCB43E] text-white border-none text-lg font-bold hover:bg-[#eaa02b] transition-colors"
+              className="w-full lg:w-[220px] h-[38px] lg:h-[38px] rounded-[40px] bg-[#FCB43E] text-white border-none text-base lg:text-lg font-bold hover:bg-[#eaa02b] transition-colors"
             >
               Post your pet
             </button>
@@ -108,7 +130,7 @@ function CreatePost() {
         </div>
       )}
 
-      {/* Pattern Overlay (unchanged) */}
+      {/* Pattern Overlay - Solo en desktop */}
       <img
         src={
           isExpanded
@@ -116,7 +138,7 @@ function CreatePost() {
             : "/assets/vectors/patterns/ExtendedPattern.svg"
         }
         alt=""
-        className={`absolute transition-all duration-400 ${
+        className={`hidden lg:block absolute transition-all duration-400 ${
           isExpanded
             ? "h-[890px] ml-[460px] -mt-[502px]"
             : "h-[890px] ml-[450px] -mt-[530px]"

@@ -4,6 +4,7 @@ import { useAppDispatch, useAuth, usePosts, useUsers, useInteractions } from "..
 import { toggleFollow } from "../../store/slices/interactionsSlice";
 import { incrementUserFollowers, decrementUserFollowers, registerUser } from "../../store/slices/usersSlice";
 import Post from "../home/Post";
+import MobileNavBar from "../navigation/MobileNavBar";
 
 function UserProfile() {
   const dispatch = useAppDispatch();
@@ -106,7 +107,11 @@ function UserProfile() {
   }
   
   return (
-    <div className="min-h-screen flex flex-col items-center bg-[#f9f5f2] font-sans">
+    <div className="min-h-screen flex flex-col items-center bg-[#f9f5f2] font-sans relative overflow-x-hidden">
+      {/* Mobile: Navbars */}
+      <MobileNavBar />
+      
+      {/* Desktop: NavBarHome se renderiza desde App.tsx */}
       {/* Header con fondo de ilustración */}
       <div className="w-full h-80 bg-[url('/assets/vectors/img/ProfileBanner.svg')] bg-cover bg-center flex items-end justify-center">
         <div className="relative -mb-12">
@@ -174,27 +179,29 @@ function UserProfile() {
         </div>
 
         {/* Posts Column - matching home feed layout */}
-        <div className="w-full flex flex-col items-center pb-12 mt-8">
-          {userPosts.length > 0 ? (
-            userPosts.map((post) => (
-              <Post
-                key={post.id}
-                postId={post.id}
-                userName={post.userName}
-                userPfp={post.userPfp}
-                userStatus={post.userStatus}
-                postImg={post.postImg}
-                postCaption={post.postCaption}
-                likes={post.likes}
-                commentsCount={post.commentsCount}
-                comments={post.comments}
-              />
-            ))
-          ) : (
-            <div className="mt-12 text-center">
-              <p className="text-gray-500 text-lg">No posts yet.</p>
-            </div>
-          )}
+        <div className="w-full flex flex-col items-center pb-20 lg:pb-12 mt-8">
+          <div className="w-full lg:w-auto px-5 lg:px-0">
+            {userPosts.length > 0 ? (
+              userPosts.map((post) => (
+                <Post
+                  key={post.id}
+                  postId={post.id}
+                  userName={post.userName}
+                  userPfp={post.userPfp}
+                  userStatus={post.userStatus}
+                  postImg={post.postImg}
+                  postCaption={post.postCaption}
+                  likes={post.likes}
+                  commentsCount={post.commentsCount}
+                  comments={post.comments}
+                />
+              ))
+            ) : (
+              <div className="mt-12 text-center">
+                <p className="text-gray-500 text-lg">No posts yet.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
