@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/login/Login'
 import SignUp from './components/login/SignUp'
 import Profile from './components/profile/Profile'
+import UserProfile from './components/profile/UserProfile'
 import Landing from './components/landing/Landing'
 import NavBarHome from "./components/navigation/NavBarHome";
 import HomeFeed from "./pages/HomeFeed";
@@ -37,6 +38,17 @@ function App() {
               <div>
                 <NavBarHome />
                 <HomeFeed />
+              </div>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile/:username" 
+          element={
+            <ProtectedRoute>
+              <div>
+                <NavBarHome />
+                <UserProfile />
               </div>
             </ProtectedRoute>
           } 

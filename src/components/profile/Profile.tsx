@@ -1,8 +1,8 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts } from "../../store/hooks";
 import { logoutUser } from "../../store/slices/authSlice";
 import { resetInteractions } from "../../store/slices/interactionsSlice";
+import Post from "../home/Post";
 
 function Profile() {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ function Profile() {
         </div>
 
         {/* Subtítulo + Botón Log out */}
-        <div className="gap-[600px] mt-12 flex items-center justify-between w-full mx-auto">
+        <div className="gap-[600px] mt-12 flex items-center justify-between w-full max-w-[1200px] px-4">
             <h2 className="text-[32px] font-bold">
              Your <span className="text-pink-600">Posts</span>
          </h2>
@@ -93,12 +93,31 @@ function Profile() {
                     Log out
                 </span>
             </button>
-
-
         </div>
 
-        {/* Espacio en blanco debajo */}
-        <div className="h-16"></div>
+        {/* Posts Column - matching home feed layout */}
+        <div className="w-full flex flex-col items-center pb-12 mt-8">
+          {userPosts.length > 0 ? (
+            userPosts.map((post) => (
+              <Post
+                key={post.id}
+                postId={post.id}
+                userName={post.userName}
+                userPfp={post.userPfp}
+                userStatus={post.userStatus}
+                postImg={post.postImg}
+                postCaption={post.postCaption}
+                likes={post.likes}
+                commentsCount={post.commentsCount}
+                comments={post.comments}
+              />
+            ))
+          ) : (
+            <div className="mt-12 text-center">
+              <p className="text-gray-500 text-lg">No posts yet. Start sharing your pet moments!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

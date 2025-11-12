@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAuth, useInteractions } from "../../store/hooks";
-import { toggleLikePost, toggleSavePost } from "../../store/slices/interactionsSlice";
-import { incrementPostLikes, decrementPostLikes, addComment } from "../../store/slices/postsSlice";
+import { toggleLikePost, toggleSavePost, toggleLikeComment } from "../../store/slices/interactionsSlice";
+import { incrementPostLikes, decrementPostLikes, addComment, incrementCommentLikes, decrementCommentLikes } from "../../store/slices/postsSlice";
 import type { Comment } from "../../utils/types/Type";
 
 type PostProps = {
@@ -27,14 +28,44 @@ function Post({
     commentsCount,
     comments,
 }: PostProps) {
+    const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { currentUser } = useAuth();
-    const { likedPosts, savedPosts } = useInteractions();
+    const { likedPosts, savedPosts, likedComments } = useInteractions();
     
     const [commentInput, setCommentInput] = useState("");
     
+    // Función helper para normalizar rutas de imágenes
+    const normalizeImagePath = (path: string): string => {
+        if (!path) return path;
+        if (path.startsWith('./assets')) {
+            return path.replace('./assets', '/assets');
+        }
+        if (path.startsWith('assets') && !path.startsWith('/assets')) {
+            return '/' + path;
+        }
+        return path;
+    };
+    
+    // Normalizar imágenes
+    const normalizedUserPfp = normalizeImagePath(userPfp);
+    const normalizedPostImg = normalizeImagePath(postImg);
+    const normalizedComments = comments.map(comment => ({
+        ...comment,
+        userPfp: normalizeImagePath(comment.userPfp),
+    }));
+    
     const isLiked = likedPosts[postId] || false;
     const isSaved = savedPosts[postId] || false;
+    
+    const handleProfileClick = () => {
+        // Si es el perfil propio, ir a /profile, sino a /profile/:username
+        if (currentUser && userName === currentUser.userName) {
+            navigate('/profile');
+        } else {
+            navigate(`/profile/${userName}`);
+        }
+    };
     
     const handleLikeClick = () => {
         dispatch(toggleLikePost(postId));
@@ -64,6 +95,16 @@ function Post({
         
         setCommentInput("");
     };
+    
+    const handleCommentLikeClick = (commentId: string) => {
+        const isCommentLiked = likedComments[commentId] || false;
+        dispatch(toggleLikeComment(commentId));
+        if (isCommentLiked) {
+            dispatch(decrementCommentLikes({ postId, commentId }));
+        } else {
+            dispatch(incrementCommentLikes({ postId, commentId }));
+        }
+    };
 
     return (
     <article
@@ -76,9 +117,9 @@ function Post({
         <div className="post-left w-[45%] h-full pt-[40px] pl-[50px]">
         {/* header */}
         <div className="post-header flex items-center justify-between w-[390px]">
-            <div className="flex items-center">
+            <div className="flex items-center cursor-pointer" onClick={handleProfileClick}>
             <img
-                src={userPfp}
+                src={normalizedUserPfp}
                 alt="pfp"
                 className="h-[60px] w-[60px] rounded-full object-cover"
             />
@@ -100,7 +141,7 @@ function Post({
         {/* post image */}
         <div className="post-img w-[400px] h-[400px] overflow-hidden rounded-[16px] mt-[20px]">
             <img
-            src={postImg}
+            src={normalizedPostImg}
             alt="post"
             className="w-full h-full object-cover object-center"
             />
@@ -163,41 +204,51 @@ function Post({
       {/* RIGHT */}
         <div className="post-right bg-[#825CFF] flex flex-col items-center w-[60%] h-full ml-[50px]">
         <div className="w-full flex-1 flex flex-col items-start overflow-y-auto px-[50px]">
-            {comments.slice(0, 3).map((comment, idx) => (
-            <div
-                className="comment text-white flex flex-col gap-[15px] mt-[40px] w-full"
-                key={idx}
-            >
-                <div className="comment-pf flex gap-[10px] items-center">
-                <img
-                    src={comment.userPfp}
-                    alt="comment-pfp"
-                    className="h-[50px] w-[50px] rounded-full object-cover"
-                />
-                <div className="pf-text">
-                    <h3 className="text-[16px] font-medium m-0">
-                    {comment.userName}
-                    </h3>
-                    <p className="text-[14px] font-light m-0">
-                    {comment.userStatus}
-                    </p>
-                </div>
-                </div>
+            {normalizedComments.slice(0, 3).map((comment) => {
+                const isCommentLiked = likedComments[comment.id] || false;
+                return (
+                <div
+                    className="comment text-white flex flex-col gap-[15px] mt-[40px] w-full"
+                    key={comment.id}
+                >
+                    <div className="comment-pf flex gap-[10px] items-center">
+                    <img
+                        src={comment.userPfp}
+                        alt="comment-pfp"
+                        className="h-[50px] w-[50px] rounded-full object-cover"
+                    />
+                    <div className="pf-text">
+                        <h3 className="text-[16px] font-medium m-0">
+                        {comment.userName}
+                        </h3>
+                        <p className="text-[14px] font-light m-0">
+                        {comment.userStatus}
+                        </p>
+                    </div>
+                    </div>
 
-                <div className="comment-text text-[18px] font-[300] text-white w-[400px]">
-                <p className="m-0">{comment.commentTxt}</p>
-                </div>
+                    <div className="comment-text text-[18px] font-[300] text-white w-[400px]">
+                    <p className="m-0">{comment.commentTxt}</p>
+                    </div>
 
-                <div className="comment-likes flex gap-[10px] text-[18px] font-[500] items-center">
-                <img
-                    src="/assets/icons/Like-icon.svg"
-                    alt="like"
-                    className="w-[20px] h-[20px]"
-                />
-                <p className="m-0">{comment.likes}</p>
+                    <div 
+                        className="comment-likes flex gap-[10px] text-[18px] font-[500] items-center cursor-pointer"
+                        onClick={() => handleCommentLikeClick(comment.id)}
+                    >
+                    <img
+                        src={
+                            isCommentLiked
+                                ? "/assets/icons/FullLike-icon.svg"
+                                : "/assets/icons/Like-icon.svg"
+                        }
+                        alt="like"
+                        className="w-[20px] h-[20px] transition-transform duration-150 hover:scale-110"
+                    />
+                    <p className="m-0">{comment.likes}</p>
+                    </div>
                 </div>
-            </div>
-            ))}
+                );
+            })}
         </div>
 
         {/* bottom comment input */}

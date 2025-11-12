@@ -54,9 +54,25 @@ const usersSlice = createSlice({
         Object.assign(user, action.payload.updates);
       }
     },
+    
+    // Incrementar followers de un usuario por userName
+    incrementUserFollowers: (state, action: PayloadAction<string>) => {
+      const user = state.registeredUsers.find(u => u.userName === action.payload);
+      if (user) {
+        user.followersCount = (user.followersCount || 0) + 1;
+      }
+    },
+    
+    // Decrementar followers de un usuario por userName
+    decrementUserFollowers: (state, action: PayloadAction<string>) => {
+      const user = state.registeredUsers.find(u => u.userName === action.payload);
+      if (user && user.followersCount && user.followersCount > 0) {
+        user.followersCount -= 1;
+      }
+    },
   },
 });
 
-export const { registerUser, updateRegisteredUser } = usersSlice.actions;
+export const { registerUser, updateRegisteredUser, incrementUserFollowers, decrementUserFollowers } = usersSlice.actions;
 export default usersSlice.reducer;
 

@@ -5,12 +5,14 @@ interface InteractionsState {
   likedPosts: Record<string, boolean>; // { postId: true/false }
   savedPosts: Record<string, boolean>; // { postId: true/false }
   likedComments: Record<string, boolean>; // { commentId: true/false }
+  following: Record<string, boolean>; // { userName: true/false }
 }
 
 const initialState: InteractionsState = {
   likedPosts: {},
   savedPosts: {},
   likedComments: {},
+  following: {},
 };
 
 const interactionsSlice = createSlice({
@@ -50,11 +52,22 @@ const interactionsSlice = createSlice({
       state.likedComments[action.payload] = false;
     },
     
+    // Toggle follow/unfollow de un usuario
+    toggleFollow: (state, action: PayloadAction<string>) => {
+      const userName = action.payload;
+      // Asegurar que following existe
+      if (!state.following) {
+        state.following = {};
+      }
+      state.following[userName] = !state.following[userName];
+    },
+    
     // Reset todas las interacciones (útil al hacer logout)
     resetInteractions: (state) => {
       state.likedPosts = {};
       state.savedPosts = {};
       state.likedComments = {};
+      state.following = {};
     },
   },
 });
@@ -66,6 +79,7 @@ export const {
   unlikePost,
   unsavePost,
   unlikeComment,
+  toggleFollow,
   resetInteractions,
 } = interactionsSlice.actions;
 

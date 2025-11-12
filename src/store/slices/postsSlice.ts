@@ -9,14 +9,25 @@ interface PostsState {
   error: string | null;
 }
 
+// Función helper para normalizar rutas de imágenes (./assets -> /assets)
+const normalizeImagePath = (path: string): string => {
+  if (path.startsWith('./assets')) {
+    return path.replace('./assets', '/assets');
+  }
+  return path;
+};
+
 // Función helper para agregar IDs a los datos existentes
 const addIdsToInitialData = (): Post[] => {
   return usersData.map((post) => ({
     ...post,
     id: nanoid(),
+    userPfp: normalizeImagePath(post.userPfp),
+    postImg: normalizeImagePath(post.postImg),
     comments: post.comments.map((comment) => ({
       ...comment,
       id: nanoid(),
+      userPfp: normalizeImagePath(comment.userPfp),
     })),
   }));
 };
