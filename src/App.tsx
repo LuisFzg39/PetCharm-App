@@ -8,13 +8,17 @@ import Landing from './components/landing/Landing'
 import NavBarHome from "./components/navigation/NavBarHome";
 import Home from "./components/home/Home";
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import AuthInitializer from './components/auth/AuthInitializer';
+import DataInitializer from './components/auth/DataInitializer';
 import { useAuth } from './store/hooks';
 
 function App() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <Router>
+    <AuthInitializer>
+      <DataInitializer>
+        <Router>
       <Routes>
         {/* Ruta predeterminada - Landing */}
         <Route path="/" element={<Landing />} />
@@ -72,6 +76,8 @@ function App() {
         />
       </Routes>
     </Router>
+    </DataInitializer>
+    </AuthInitializer>
   );
 }
 

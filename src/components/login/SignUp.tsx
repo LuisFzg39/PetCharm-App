@@ -1,22 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAppDispatch, useUsers } from '../../store/hooks';
-import { registerUser } from '../../store/slices/usersSlice';
-import { loginUser } from '../../store/slices/authSlice';
-
-// Avatares predeterminados para nuevos usuarios
-const DEFAULT_AVATARS = [
-    '/assets/vectors/img/profile-pics/Pfp2.jpg',
-    '/assets/vectors/img/profile-pics/Pfp3.jpg',
-    '/assets/vectors/img/profile-pics/Pfp4.jpg',
-    '/assets/vectors/img/profile-pics/Pfp5.jpg',
-    '/assets/vectors/img/profile-pics/Pfp6.jpg',
-];
+import { useAppDispatch, useAuth } from '../../store/hooks';
+import { registerUserAsync } from '../../store/slices/authSlice';
+import { fetchUserInteractions } from '../../store/slices/interactionsSlice';
+import { getRandomProfilePic, getRandomUserStatus } from '../../utils/userDefaults';
 
 function SignUp() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const { registeredUsers } = useUsers();
+    const { currentUser, error: authError, loading: authLoading } = useAuth();
     
     const [userName, setUserName] = useState('');
     const [email, setEmail] = useState('');
@@ -24,13 +16,34 @@ function SignUp() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Redirigir si ya está autenticado
+    useEffect(() => {
+        if (currentUser) {
+            navigate('/home');
+        }
+    }, [currentUser, navigate]);
+
+    // Mostrar errores de autenticación
+    useEffect(() => {
+        if (authError) {
+            setError(authError);
+        }
+    }, [authError]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
         // Validaciones
         if (!userName.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
             setError('Please fill in all fields');
+            return;
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.trim())) {
+            setError('Please enter a valid email address');
             return;
         }
 
@@ -44,58 +57,40 @@ function SignUp() {
             return;
         }
 
-        // Verificar si el email ya está registrado
-        const emailExists = registeredUsers.some(
-            u => u.email.toLowerCase() === email.toLowerCase()
-        );
-
-        if (emailExists) {
-            setError('Email already registered');
+        // Validar que el username no tenga espacios
+        if (userName.trim().includes(' ')) {
+            setError('Username cannot contain spaces');
             return;
         }
 
-        // Verificar si el username ya existe
-        const userNameExists = registeredUsers.some(
-            u => u.userName.toLowerCase() === userName.toLowerCase()
-        );
+        try {
+            // Obtener foto de perfil y estado aleatorios del JSON
+            const randomAvatar = getRandomProfilePic();
+            const randomStatus = getRandomUserStatus();
 
-        if (userNameExists) {
-            setError('Username already taken');
-            return;
+            // Registrar usuario con Supabase Auth (esto también crea el perfil en la tabla users)
+            const registerResult = await dispatch(registerUserAsync({
+                email: email.trim(),
+                password: password,
+                userName: userName.trim(),
+                userPfp: randomAvatar,
+                userStatus: randomStatus,
+                bio: `Hi! I'm ${userName}`,
+            }));
+            
+            if (registerUserAsync.fulfilled.match(registerResult)) {
+                // Cargar interacciones del usuario
+                if (registerResult.payload.userName) {
+                    await dispatch(fetchUserInteractions());
+                }
+                // Redirigir al home
+                navigate('/home');
+            } else {
+                setError(registerResult.payload as string || 'Error al registrar el usuario');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error al crear la cuenta');
         }
-
-        // Seleccionar avatar aleatorio
-        const randomAvatar = DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)];
-
-        // Crear nuevo usuario
-        const newUser = {
-            email: email.trim(),
-            password: password,
-            userName: userName.trim(),
-            userPfp: randomAvatar,
-            userStatus: '🐾 New member',
-            bio: `Hi! I'm ${userName}`,
-            followersCount: 0,
-            followingCount: 0,
-        };
-
-        // Registrar usuario
-        dispatch(registerUser(newUser));
-
-        // Auto-login después del registro
-        dispatch(loginUser({
-            id: '', // Se generará en el slice
-            userName: newUser.userName,
-            userPfp: newUser.userPfp,
-            userStatus: newUser.userStatus,
-            bio: newUser.bio,
-            postsCount: 0,
-            followersCount: 0,
-            followingCount: 0,
-        }));
-
-        // Redirigir al home
-        navigate('/home');
     };
 
     return (
@@ -175,12 +170,13 @@ function SignUp() {
                         
                         <button 
                             type="submit" 
-                            className="w-full text-white font-medium py-3 px-4 transition-colors hover:opacity-90 rounded-lg"
+                            disabled={authLoading}
+                            className="w-full text-white font-medium py-3 px-4 transition-colors hover:opacity-90 rounded-lg disabled:opacity-50"
                             style={{ 
                                 backgroundColor: '#FCB43E',
                             }}
                         >
-                            Sign up
+                            {authLoading ? 'Creating account...' : 'Sign up'}
                         </button>
                         
                         <div className="text-center">
@@ -262,13 +258,14 @@ function SignUp() {
                         
                         <button 
                             type="submit" 
-                            className="w-64 text-white font-medium py-3 px-4 transition-colors hover:opacity-90"
+                            disabled={authLoading}
+                            className="w-64 text-white font-medium py-3 px-4 transition-colors hover:opacity-90 disabled:opacity-50"
                             style={{ 
                                 backgroundColor: '#FCB43E',
                                 borderRadius: '50px'
                             }}
                         >
-                            Sign Up
+                            {authLoading ? 'Creating account...' : 'Sign Up'}
                         </button>
                         
                         <div className="text-center">

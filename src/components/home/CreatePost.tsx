@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useAppDispatch, useAuth } from "../../store/hooks";
-import { createPost } from "../../store/slices/postsSlice";
+import { createPostAsync, fetchPosts } from "../../store/slices/postsSlice";
 
 function CreatePost() {
   const dispatch = useAppDispatch();
@@ -10,7 +10,7 @@ function CreatePost() {
   const [pictureUrl, setPictureUrl] = useState("");
   const [caption, setCaption] = useState("");
 
-  function handlePostClick() {
+  async function handlePostClick() {
     // validation
     if (!pictureUrl.trim() || !caption.trim()) {
       alert("Please add both a picture URL and a caption!");
@@ -23,21 +23,23 @@ function CreatePost() {
     }
 
     try {
-      // Dispatch action to create post
-      dispatch(createPost({
+      // Dispatch async action to create post
+      const result = await dispatch(createPostAsync({
         imageUrl: pictureUrl.trim(),
         caption: caption.trim(),
-        user: {
-          userName: currentUser.userName,
-          userPfp: currentUser.userPfp,
-          userStatus: currentUser.userStatus,
-        },
       }));
 
-      // reset
-      setPictureUrl("");
-      setCaption("");
-      setIsExpanded(false);
+      if (createPostAsync.fulfilled.match(result)) {
+        // Recargar posts para tener los datos más recientes desde Supabase
+        await dispatch(fetchPosts());
+        
+        // reset
+        setPictureUrl("");
+        setCaption("");
+        setIsExpanded(false);
+      } else {
+        alert("Error al crear el post: " + (result.payload as string));
+      }
     } catch (err) {
       console.error("Error creating post:", err);
       alert("Something went wrong while creating the post — check console.");

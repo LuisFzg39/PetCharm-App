@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts } from "../../store/hooks";
-import { logoutUser } from "../../store/slices/authSlice";
+import { logoutUserAsync } from "../../store/slices/authSlice";
 import { resetInteractions } from "../../store/slices/interactionsSlice";
 import Post from "../home/Post";
 import MobileNavBar from "../navigation/MobileNavBar";
@@ -14,8 +14,8 @@ function Profile() {
   // Filtrar posts del usuario actual
   const userPosts = posts.filter(post => post.userName === currentUser?.userName);
   
-  const handleLogout = () => {
-    dispatch(logoutUser());
+  const handleLogout = async () => {
+    await dispatch(logoutUserAsync());
     dispatch(resetInteractions());
     navigate('/login');
   };

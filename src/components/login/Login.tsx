@@ -1,18 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAppDispatch, useUsers } from '../../store/hooks';
-import { loginUser } from '../../store/slices/authSlice';
+import { useAppDispatch, useAuth } from '../../store/hooks';
+import { loginUserAsync } from '../../store/slices/authSlice';
+import { fetchUserInteractions } from '../../store/slices/interactionsSlice';
 
 function Login() {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const { registeredUsers } = useUsers();
+    const { currentUser, error: authError, loading } = useAuth();
     
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Redirigir si ya está autenticado
+    useEffect(() => {
+        if (currentUser) {
+            navigate('/home');
+        }
+    }, [currentUser, navigate]);
+
+    // Mostrar errores de autenticación
+    useEffect(() => {
+        if (authError) {
+            setError(authError);
+        }
+    }, [authError]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -22,30 +37,23 @@ function Login() {
             return;
         }
 
-        // Buscar usuario en la lista de registrados
-        const user = registeredUsers.find(
-            u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-        );
-
-        if (!user) {
-            setError('Invalid email or password');
-            return;
+        try {
+            // Login con Supabase
+            const result = await dispatch(loginUserAsync({ email, password }));
+            
+            if (loginUserAsync.fulfilled.match(result)) {
+                // Cargar interacciones del usuario
+                if (result.payload.userName) {
+                    await dispatch(fetchUserInteractions());
+                }
+                // Redirigir al home
+                navigate('/home');
+            } else {
+                setError(result.payload as string || 'Invalid email or password');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error al iniciar sesión');
         }
-
-        // Login exitoso - dispatch del usuario
-        dispatch(loginUser({
-            id: user.id,
-            userName: user.userName,
-            userPfp: user.userPfp,
-            userStatus: user.userStatus,
-            bio: user.bio,
-            postsCount: 0,
-            followersCount: user.followersCount || 0,
-            followingCount: user.followingCount || 0,
-        }));
-
-        // Redirigir al home
-        navigate('/home');
     };
 
     return (
@@ -109,12 +117,13 @@ function Login() {
                         
                         <button 
                             type="submit" 
-                            className="w-full text-white font-medium py-3 px-4 transition-colors hover:opacity-90 rounded-lg"
+                            disabled={loading}
+                            className="w-full text-white font-medium py-3 px-4 transition-colors hover:opacity-90 rounded-lg disabled:opacity-50"
                             style={{ 
                                 backgroundColor: '#FCB43E',
                             }}
                         >
-                            Log in
+                            {loading ? 'Logging in...' : 'Log in'}
                         </button>
                         
                         <div className="text-center">
@@ -176,13 +185,14 @@ function Login() {
                         
                         <button 
                             type="submit" 
-                            className="w-64 text-white font-medium py-3 px-4 transition-colors hover:opacity-90"
+                            disabled={loading}
+                            className="w-64 text-white font-medium py-3 px-4 transition-colors hover:opacity-90 disabled:opacity-50"
                             style={{ 
                                 backgroundColor: '#FCB43E',
                                 borderRadius: '50px'
                             }}
                         >
-                            Log in
+                            {loading ? 'Logging in...' : 'Log in'}
                         </button>
                         
                         <div className="text-center">

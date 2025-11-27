@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts, useUsers, useInteractions } from "../../store/hooks";
 import { toggleFollow } from "../../store/slices/interactionsSlice";
-import { incrementUserFollowers, decrementUserFollowers, registerUser } from "../../store/slices/usersSlice";
+import { updateUserFollowersAsync, registerUserAsync, fetchUsers } from "../../store/slices/usersSlice";
 import Post from "../home/Post";
 import MobileNavBar from "../navigation/MobileNavBar";
 
@@ -57,37 +57,44 @@ function UserProfile() {
     };
   }
   
+  // Cargar usuarios al montar
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
   // Asegurar que el usuario esté en registeredUsers ANTES de cualquier cosa
   useEffect(() => {
     if (profileUser && !registeredUsers.find(u => u.userName === username)) {
-      dispatch(registerUser({
-        email: `${username}@petcharm.com`,
-        password: '',
-        userName: profileUser.userName,
-        userPfp: profileUser.userPfp,
-        userStatus: profileUser.userStatus,
-        bio: profileUser.bio,
-        followersCount: 0,
-        followingCount: 0,
-      }));
+      // Solo registrar si no tiene email (es un usuario creado desde posts)
+      if (!profileUser.email) {
+        dispatch(registerUserAsync({
+          email: `${username}@petcharm.com`,
+          password: '', // No se usará ya que ahora usamos Supabase Auth
+          userName: profileUser.userName,
+          userPfp: profileUser.userPfp,
+          userStatus: profileUser.userStatus,
+          bio: profileUser.bio,
+          followersCount: 0,
+          followingCount: 0,
+        }));
+      }
     }
   }, [profileUser, username, registeredUsers, dispatch]);
 
   // Verificar si el usuario actual sigue al usuario del perfil (igual que isLiked)
   const isFollowing = profileUser ? (following[profileUser.userName] || false) : false;
   
-  const handleFollowToggle = () => {
+  const handleFollowToggle = async () => {
     if (!profileUser || !username) return;
     
     // Toggle follow state (igual que toggleLikePost)
     dispatch(toggleFollow(profileUser.userName));
     
-    // Actualizar contador (igual que incrementPostLikes/decrementPostLikes)
-    if (isFollowing) {
-      dispatch(decrementUserFollowers(profileUser.userName));
-    } else {
-      dispatch(incrementUserFollowers(profileUser.userName));
-    }
+    // Actualizar contador en Supabase
+    await dispatch(updateUserFollowersAsync({
+      userName: profileUser.userName,
+      increment: !isFollowing,
+    }));
   };
   
   if (!currentUser) {

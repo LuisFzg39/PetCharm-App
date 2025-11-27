@@ -21,6 +21,10 @@ const persistConfig = {
   version: 1,
   storage,
   // Qué slices queremos persistir
+  // auth: para mantener la sesión
+  // interactions: para mantener likes/saves del usuario
+  // users: para mantener la lista de usuarios
+  // posts: se carga desde Supabase, pero se persiste como cache
   whitelist: ['auth', 'posts', 'interactions', 'users'],
 };
 

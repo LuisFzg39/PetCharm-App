@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAuth, useInteractions } from "../../store/hooks";
-import { toggleLikePost, toggleSavePost, toggleLikeComment } from "../../store/slices/interactionsSlice";
-import { incrementPostLikes, decrementPostLikes, addComment, incrementCommentLikes, decrementCommentLikes } from "../../store/slices/postsSlice";
+import { togglePostLikeAsync, toggleCommentLikeAsync, toggleSavePost } from "../../store/slices/interactionsSlice";
+import { incrementPostLikes, decrementPostLikes, addCommentAsync, incrementCommentLikes, decrementCommentLikes, fetchPosts } from "../../store/slices/postsSlice";
 import type { Comment } from "../../utils/types/Type";
 
 type PostProps = {
@@ -68,12 +68,22 @@ function Post({
         }
     };
     
-    const handleLikeClick = () => {
-        dispatch(toggleLikePost(postId));
+    const handleLikeClick = async () => {
+        if (!currentUser) return;
+        
+        // Optimistic update
         if (isLiked) {
             dispatch(decrementPostLikes(postId));
         } else {
             dispatch(incrementPostLikes(postId));
+        }
+        
+        // Actualizar en Supabase
+        const result = await dispatch(togglePostLikeAsync({ postId }));
+        
+        // Recargar posts para tener los contadores actualizados desde Supabase
+        if (togglePostLikeAsync.fulfilled.match(result)) {
+            await dispatch(fetchPosts());
         }
     };
     
@@ -81,30 +91,43 @@ function Post({
         dispatch(toggleSavePost(postId));
     };
     
-    const handleSendComment = () => {
+    const handleSendComment = async () => {
         if (!commentInput.trim() || !currentUser) return;
         
-        dispatch(addComment({
-            postId,
-            commentTxt: commentInput.trim(),
-            user: {
-                userName: currentUser.userName,
-                userPfp: currentUser.userPfp,
-                userStatus: currentUser.userStatus,
-            },
-        }));
-        
-        setCommentInput("");
-        // Mantener el popup abierto para que el usuario vea su comentario
+        try {
+            const result = await dispatch(addCommentAsync({
+                postId,
+                commentTxt: commentInput.trim(),
+            }));
+            
+            if (addCommentAsync.fulfilled.match(result)) {
+                // Recargar posts para actualizar el contador de comentarios
+                await dispatch(fetchPosts());
+                setCommentInput("");
+            }
+        } catch (error) {
+            console.error('Error adding comment:', error);
+        }
     };
     
-    const handleCommentLikeClick = (commentId: string) => {
+    const handleCommentLikeClick = async (commentId: string) => {
+        if (!currentUser) return;
+        
         const isCommentLiked = likedComments[commentId] || false;
-        dispatch(toggleLikeComment(commentId));
+        
+        // Optimistic update
         if (isCommentLiked) {
             dispatch(decrementCommentLikes({ postId, commentId }));
         } else {
             dispatch(incrementCommentLikes({ postId, commentId }));
+        }
+        
+        // Actualizar en Supabase
+        const result = await dispatch(toggleCommentLikeAsync({ commentId }));
+        
+        // Recargar posts para tener los contadores actualizados desde Supabase
+        if (toggleCommentLikeAsync.fulfilled.match(result)) {
+            await dispatch(fetchPosts());
         }
     };
 

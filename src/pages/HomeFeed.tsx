@@ -1,10 +1,34 @@
-import React from "react";
+import React, { useEffect } from "react";
 import CreatePost from "../components/home/CreatePost";
 import Post from "../components/home/Post";
-import { usePosts } from "../store/hooks";
+import { useAppDispatch, usePosts, useAuth } from "../store/hooks";
+import { fetchPosts } from "../store/slices/postsSlice";
+import { fetchUserInteractions } from "../store/slices/interactionsSlice";
 
 function HomeFeed() {
-  const { posts } = usePosts();
+  const dispatch = useAppDispatch();
+  const { posts, loading } = usePosts();
+  const { currentUser } = useAuth();
+
+  // Cargar posts al montar el componente
+  useEffect(() => {
+    dispatch(fetchPosts());
+  }, [dispatch]);
+
+  // Cargar interacciones del usuario si está autenticado
+  useEffect(() => {
+    if (currentUser?.userName) {
+      dispatch(fetchUserInteractions(currentUser.userName));
+    }
+  }, [dispatch, currentUser]);
+
+  if (loading && posts.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#f8f7ff] flex items-center justify-center">
+        <p className="text-lg text-gray-600">Cargando posts...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f7ff] flex flex-col items-center pb-4 lg:pb-12">
