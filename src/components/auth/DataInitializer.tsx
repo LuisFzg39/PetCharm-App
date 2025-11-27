@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAppDispatch, useAuth, usePosts } from '../../store/hooks';
+import { useAppDispatch, useAuth } from '../../store/hooks';
 import { fetchPosts } from '../../store/slices/postsSlice';
 import { fetchUserInteractions } from '../../store/slices/interactionsSlice';
 import { fetchUsers } from '../../store/slices/usersSlice';
@@ -11,7 +11,6 @@ import { fetchUsers } from '../../store/slices/usersSlice';
 function DataInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const { currentUser, isAuthenticated } = useAuth();
-  const { posts } = usePosts();
   const [isRehydrated, setIsRehydrated] = useState(false);
 
   // Esperar a que REHYDRATE termine antes de cargar datos

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { REHYDRATE } from 'redux-persist';
-import type { Post, Comment, CreatePostPayload, CreateCommentPayload } from '../../utils/types/Type';
+import type { Post, CreatePostPayload, CreateCommentPayload } from '../../utils/types/Type';
 import {
   fetchPosts as fetchPostsFromDB,
   createPostInDB,

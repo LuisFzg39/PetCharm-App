@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAppDispatch, useAuth } from "../../store/hooks";
 import { createPostAsync, fetchPosts } from "../../store/slices/postsSlice";
 

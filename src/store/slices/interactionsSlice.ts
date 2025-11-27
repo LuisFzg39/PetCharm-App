@@ -7,8 +7,6 @@ import {
   getCurrentUser,
   toggleFollowInDB,
   fetchUserFollowing,
-  updateUserFollowing,
-  updateUserFollowers,
 } from '../../services/supabaseService';
 
 // Estado inicial del slice de interacciones

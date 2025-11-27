@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import CreatePost from "../components/home/CreatePost";
 import Post from "../components/home/Post";
 import { useAppDispatch, usePosts, useAuth } from "../store/hooks";

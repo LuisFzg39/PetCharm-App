@@ -1,5 +1,5 @@
 import { supabase } from '../store/store';
-import type { Post, Comment, User, CreatePostPayload, CreateCommentPayload } from '../utils/types/Type';
+import type { Post, Comment, CreatePostPayload, CreateCommentPayload } from '../utils/types/Type';
 import type { RegisteredUser } from '../store/slices/usersSlice';
 
 // ==================== POSTS ====================
@@ -1287,7 +1287,7 @@ export const toggleFollowInDB = async (followerId: string, followedUserName: str
         // Si el error es de duplicado (23505, PGRST301, o 409), la relación ya existe
         // Esto puede pasar en casos de race condition (otra petición insertó entre la verificación y el insert)
         // No es un error crítico - la relación ya existe, que es lo que queríamos lograr
-        if (insertError.code === '23505' || insertError.code === 'PGRST301' || insertError.status === 409 || insertError.code === '409') {
+        if (insertError.code === '23505' || insertError.code === 'PGRST301' || insertError.code === '409') {
           // La relación ya existe en la DB - esto es válido, no lanzar error
           return;
         }
