@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts, useUsers, useInteractions } from "../../store/hooks";
-import { toggleFollow } from "../../store/slices/interactionsSlice";
-import { updateUserFollowersAsync, registerUserAsync, fetchUsers } from "../../store/slices/usersSlice";
+import { toggleFollowAsync, fetchUserInteractions, toggleFollow } from "../../store/slices/interactionsSlice";
+import { fetchUsers } from "../../store/slices/usersSlice";
+import { checkAuthSession, updateUserFollowingCount } from "../../store/slices/authSlice";
 import Post from "../home/Post";
 import MobileNavBar from "../navigation/MobileNavBar";
 
@@ -57,44 +58,65 @@ function UserProfile() {
     };
   }
   
-  // Cargar usuarios al montar
+  // Cargar usuarios e interacciones al montar
   useEffect(() => {
     dispatch(fetchUsers());
+    dispatch(fetchUserInteractions());
   }, [dispatch]);
 
-  // Asegurar que el usuario esté en registeredUsers ANTES de cualquier cosa
-  useEffect(() => {
-    if (profileUser && !registeredUsers.find(u => u.userName === username)) {
-      // Solo registrar si no tiene email (es un usuario creado desde posts)
-      if (!profileUser.email) {
-        dispatch(registerUserAsync({
-          email: `${username}@petcharm.com`,
-          password: '', // No se usará ya que ahora usamos Supabase Auth
-          userName: profileUser.userName,
-          userPfp: profileUser.userPfp,
-          userStatus: profileUser.userStatus,
-          bio: profileUser.bio,
-          followersCount: 0,
-          followingCount: 0,
-        }));
-      }
-    }
-  }, [profileUser, username, registeredUsers, dispatch]);
+  // No intentar registrar usuarios automáticamente
+  // Los usuarios ya deben existir en la base de datos desde que crearon posts
+  // Si no existe, se mostrará un mensaje de error
 
   // Verificar si el usuario actual sigue al usuario del perfil (igual que isLiked)
   const isFollowing = profileUser ? (following[profileUser.userName] || false) : false;
   
   const handleFollowToggle = async () => {
-    if (!profileUser || !username) return;
+    if (!profileUser || !username || !currentUser) return;
     
-    // Toggle follow state (igual que toggleLikePost)
+    // Guardar el estado actual ANTES del toggle optimista
+    const currentFollowingState = isFollowing;
+    
+    // Actualización optimista: actualizar el estado inmediatamente
     dispatch(toggleFollow(profileUser.userName));
+    // Actualizar optimísticamente el contador de following del usuario actual
+    dispatch(updateUserFollowingCount(!currentFollowingState)); // true = incrementar, false = decrementar
     
-    // Actualizar contador en Supabase
-    await dispatch(updateUserFollowersAsync({
-      userName: profileUser.userName,
-      increment: !isFollowing,
-    }));
+    try {
+      // Toggle follow state y actualizar contadores en Supabase
+      // Pasar el estado anterior para que el thunk use el valor correcto
+      const result = await dispatch(toggleFollowAsync({ 
+        userName: profileUser.userName,
+        currentIsFollowing: currentFollowingState 
+      }));
+      
+      // Si falló, el reducer revertirá el cambio automáticamente
+      if (toggleFollowAsync.rejected.match(result)) {
+        // Revertir el cambio optimista del contador
+        dispatch(updateUserFollowingCount(currentFollowingState)); // Revertir al estado anterior
+        // El reducer ya revertirá el cambio, solo loguear el error
+        const errorMessage = result.payload as string;
+        if (errorMessage?.includes('RLS') || errorMessage?.includes('row-level security')) {
+          console.warn('Error de permisos RLS. Por favor, configura las políticas de seguridad en Supabase para la tabla "follows".');
+        } else {
+          console.warn('Error al hacer follow/unfollow:', errorMessage);
+        }
+      } else if (toggleFollowAsync.fulfilled.match(result)) {
+        // Si fue exitoso, recargar usuarios, interacciones y perfil del usuario actual
+        // para actualizar todos los contadores (esto sincronizará el contador optimista con la DB)
+        // IMPORTANTE: Recargar interacciones para sincronizar el estado con la DB
+        Promise.all([
+          dispatch(fetchUsers()),
+          dispatch(fetchUserInteractions()), // Esto sincronizará el estado following con la DB
+          dispatch(checkAuthSession()), // Recargar perfil del usuario actual para actualizar followingCount
+        ]).catch(err => console.warn('Error recargando datos después de follow:', err));
+      }
+    } catch (error) {
+      // Si hay un error, revertir el cambio optimista
+      dispatch(toggleFollow(profileUser.userName));
+      dispatch(updateUserFollowingCount(currentFollowingState)); // Revertir el contador
+      console.warn('Error en handleFollowToggle:', error);
+    }
   };
   
   if (!currentUser) {
@@ -159,7 +181,12 @@ function UserProfile() {
             <p className="text-[20px]">Followers</p>
           </div>
           <div className="text-center">
-            <p className="font-semibold text-indigo-600 text-[25px]">{profileUser.followingCount || 0}</p>
+            <p className="font-semibold text-indigo-600 text-[25px]">
+              {(() => {
+                const latestUser = registeredUsers.find(u => u.userName === username);
+                return latestUser?.followingCount ?? 0;
+              })()}
+            </p>
             <p className="text-[20px]">Following</p>
           </div>
         </div>

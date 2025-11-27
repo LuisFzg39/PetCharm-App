@@ -18,7 +18,7 @@ function HomeFeed() {
   // Cargar interacciones del usuario si está autenticado
   useEffect(() => {
     if (currentUser?.userName) {
-      dispatch(fetchUserInteractions(currentUser.userName));
+      dispatch(fetchUserInteractions());
     }
   }, [dispatch, currentUser]);
 

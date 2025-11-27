@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts } from "../../store/hooks";
-import { logoutUserAsync } from "../../store/slices/authSlice";
+import { logoutUserAsync, updateUserProfileAsync } from "../../store/slices/authSlice";
 import { resetInteractions } from "../../store/slices/interactionsSlice";
+import { fetchPosts } from "../../store/slices/postsSlice";
 import Post from "../home/Post";
 import MobileNavBar from "../navigation/MobileNavBar";
 
@@ -11,6 +13,10 @@ function Profile() {
   const { currentUser } = useAuth();
   const { posts } = usePosts();
   
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState(currentUser?.userName || "");
+  const [editStatus, setEditStatus] = useState(currentUser?.userStatus || "");
+  
   // Filtrar posts del usuario actual
   const userPosts = posts.filter(post => post.userName === currentUser?.userName);
   
@@ -18,6 +24,40 @@ function Profile() {
     await dispatch(logoutUserAsync());
     dispatch(resetInteractions());
     navigate('/login');
+  };
+
+  const handleOpenEditModal = () => {
+    if (currentUser) {
+      setEditName(currentUser.userName);
+      setEditStatus(currentUser.userStatus);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const result = await dispatch(updateUserProfileAsync({
+        userId: currentUser.id,
+        updates: {
+          userName: editName.trim(),
+          userStatus: editStatus.trim(),
+        }
+      }));
+      
+      if (updateUserProfileAsync.fulfilled.match(result)) {
+        setShowEditModal(false);
+        // Recargar posts para actualizar los nombres en los posts
+        await dispatch(fetchPosts());
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
   
   if (!currentUser) {
@@ -48,7 +88,10 @@ function Profile() {
             </div>
 
             <div className="absolute bottom-0 right-0 rounded-full bg-gradient-to-r from-[#5054DB] to-[#C06DFF] p-[2.5px]">
-                <button className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow hover:bg-gray-100 transition">
+                <button 
+                    onClick={handleOpenEditModal}
+                    className="w-12 h-12 flex items-center justify-center rounded-full bg-white shadow hover:bg-gray-100 transition"
+                >
                     <img
                         src="/assets/icons/Pencil-icon.svg"
                         alt="Edit"
@@ -128,6 +171,82 @@ function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Modal de edición de perfil */}
+      {showEditModal && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={handleCloseEditModal}
+        >
+          <div 
+            className="bg-white rounded-[20px] w-full max-w-[500px] p-6 lg:p-8 relative border border-black"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Botón de cerrar */}
+            <button
+              onClick={handleCloseEditModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors text-2xl font-light w-6 h-6 flex items-center justify-center"
+            >
+              ×
+            </button>
+
+            {/* Título con iconos */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <img
+                src="/assets/icons/Cat-icon.svg"
+                alt="cat"
+                className="w-8 h-8"
+              />
+              <h2 className="text-2xl font-bold text-[#825CFF]">
+                Edit Profile
+              </h2>
+              <img
+                src="/assets/icons/Dog-icon.svg"
+                alt="dog"
+                className="w-8 h-8"
+              />
+            </div>
+
+            {/* Campo Name */}
+            <div className="mb-6">
+              <label className="block text-gray-700 font-medium mb-2 text-base">
+                Name
+              </label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="username..."
+                className="w-full px-4 py-3 rounded-lg border-2 border-[#825CFF] outline-none focus:border-[#825CFF] focus:ring-2 focus:ring-[#825CFF]/20 text-gray-700 placeholder:text-gray-400"
+              />
+            </div>
+
+            {/* Campo Status */}
+            <div className="mb-6">
+              <label className="block text-gray-700 font-medium mb-2 text-base">
+                Status
+              </label>
+              <input
+                type="text"
+                value={editStatus}
+                onChange={(e) => setEditStatus(e.target.value)}
+                placeholder="status..."
+                className="w-full px-4 py-3 rounded-lg border-2 border-[#825CFF] outline-none focus:border-[#825CFF] focus:ring-2 focus:ring-[#825CFF]/20 text-gray-700 placeholder:text-gray-400"
+              />
+            </div>
+
+            {/* Botón de guardar */}
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={handleSaveProfile}
+                className="px-6 py-2 rounded-full bg-[#825CFF] text-white font-medium hover:bg-[#6b4dd4] transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

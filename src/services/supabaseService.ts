@@ -204,9 +204,36 @@ export const createPostInDB = async (
 
 /**
  * Eliminar un post de Supabase
+ * Solo el dueño del post puede borrarlo
  */
 export const deletePostFromDB = async (postId: string): Promise<void> => {
   try {
+    // Verificar que el usuario esté autenticado
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    // Obtener el post para verificar el dueño
+    const { data: post, error: postError } = await supabase
+      .from('posts')
+      .select('user_id')
+      .eq('id', postId)
+      .single();
+
+    if (postError) {
+      throw new Error('Error al obtener el post');
+    }
+
+    if (!post) {
+      throw new Error('Post no encontrado');
+    }
+
+    // Verificar que el usuario actual sea el dueño del post
+    if (post.user_id !== session.user.id) {
+      throw new Error('No tienes permiso para borrar este post');
+    }
+
     // Eliminar likes asociados
     await supabase.from('likes').delete().eq('post_id', postId);
     
@@ -324,24 +351,56 @@ export const deleteCommentFromDB = async (commentId: string): Promise<void> => {
  */
 export const togglePostLikeInDB = async (postId: string, userId: string, isLiked: boolean): Promise<void> => {
   try {
-    if (isLiked) {
-      // Eliminar like
-      const { error } = await supabase
-        .from('likes')
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', userId);
+    // Primero verificar si el like ya existe usando maybeSingle para evitar errores cuando no existe
+    const { data: existingLike, error: checkError } = await supabase
+      .from('likes')
+      .select('post_id')
+      .eq('post_id', postId)
+      .eq('user_id', userId)
+      .maybeSingle();
 
-      if (error) throw error;
-    } else {
-      // Agregar like
-      const { error } = await supabase
-        .from('likes')
-        .insert([{ post_id: postId, user_id: userId }]);
-
-      if (error) throw error;
+    // Si hay un error que no sea "no encontrado", lanzarlo
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
     }
-  } catch (error) {
+
+    const likeExists = !!existingLike;
+
+    if (isLiked) {
+      // Eliminar like solo si existe
+      if (likeExists) {
+        const { error } = await supabase
+          .from('likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      }
+    } else {
+      // Agregar like solo si no existe
+      if (!likeExists) {
+        const { error } = await supabase
+          .from('likes')
+          .insert([{ post_id: postId, user_id: userId }]);
+
+        // Si el error es de duplicado o conflicto, ignorarlo (ya existe)
+        if (error) {
+          // Códigos de error comunes: 23505 (unique violation), 409 (conflict)
+          if (error.code === '23505' || error.code === 'PGRST301' || error.message?.includes('duplicate') || error.message?.includes('conflict')) {
+            console.warn('Like already exists, ignoring duplicate insert');
+            return;
+          }
+          throw error;
+        }
+      }
+    }
+  } catch (error: any) {
+    // Si es un error de duplicado o conflicto, no es crítico
+    if (error.code === '23505' || error.code === 'PGRST301' || error.code === 409 || error.message?.includes('duplicate') || error.message?.includes('conflict')) {
+      console.warn('Like already exists, ignoring duplicate insert');
+      return;
+    }
     console.error('Error toggling post like:', error);
     throw error;
   }
@@ -359,14 +418,24 @@ export const fetchUserPostLikes = async (userId: string): Promise<Record<string,
       .eq('user_id', userId);
 
     if (error) {
+      // Si es un error 406 (Not Acceptable), puede ser un problema de permisos o formato
+      // Intentar con un formato más simple
+      if (error.code === 'PGRST116' || error.message?.includes('406')) {
+        console.warn('Error fetching user post likes (may be permissions issue):', error);
+        return {};
+      }
       console.warn('Error fetching user post likes:', error);
       return {};
     }
 
     const likes: Record<string, boolean> = {};
-    data?.forEach(like => {
-      likes[like.post_id] = true;
-    });
+    if (data) {
+      data.forEach(like => {
+        if (like.post_id) {
+          likes[like.post_id] = true;
+        }
+      });
+    }
 
     return likes;
   } catch (error) {
@@ -698,9 +767,10 @@ export const getCurrentUserProfile = async () => {
 
     const user = session.user;
 
+    // Solo seleccionar columnas que existen
     const { data: userProfile, error } = await supabase
       .from('users')
-      .select('*')
+      .select('id, username, pfp_url, status')
       .eq('id', user.id)
       .single();
 
@@ -715,9 +785,19 @@ export const getCurrentUserProfile = async () => {
       return null;
     }
 
+    // Calcular contadores desde la tabla follows
+    const [followersCount, followingCount] = await Promise.all([
+      getFollowersCount(user.id),
+      getFollowingCount(user.id),
+    ]);
+
     return {
       authUser: user,
-      profile: userProfile,
+      profile: {
+        ...userProfile,
+        followers_count: followersCount,
+        following_count: followingCount,
+      },
     };
   } catch (error: any) {
     // No loggear errores de sesión faltante
@@ -782,9 +862,10 @@ export const checkUsernameExists = async (userName: string): Promise<boolean> =>
  */
 export const fetchUsers = async (): Promise<RegisteredUser[]> => {
   try {
+    // Solo seleccionar columnas que existen en la tabla
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, username, pfp_url, status, followers_count, following_count');
+      .select('id, username, pfp_url, status');
 
     if (error) {
       console.error('Error fetching users:', error);
@@ -793,17 +874,29 @@ export const fetchUsers = async (): Promise<RegisteredUser[]> => {
     }
     if (!data) return [];
 
-    return data.map(user => ({
-      id: user.id,
-      email: '', // email no existe en la tabla users
-      password: '', // password no existe en la tabla users
-      userName: user.username, // Columna real: username
-      userPfp: user.pfp_url, // Columna real: pfp_url
-      userStatus: user.status, // Columna real: status
-      bio: undefined, // bio no existe en la tabla
-      followersCount: user.followers_count || 0, // puede no existir
-      followingCount: user.following_count || 0, // puede no existir
-    }));
+    // Obtener contadores de followers y following desde la tabla follows
+    const usersWithCounts = await Promise.all(
+      data.map(async (user) => {
+        const [followersCount, followingCount] = await Promise.all([
+          getFollowersCount(user.id),
+          getFollowingCount(user.id),
+        ]);
+
+        return {
+          id: user.id,
+          email: '', // email no existe en la tabla users
+          password: '', // password no existe en la tabla users
+          userName: user.username, // Columna real: username
+          userPfp: user.pfp_url, // Columna real: pfp_url
+          userStatus: user.status, // Columna real: status
+          bio: undefined, // bio no existe en la tabla
+          followersCount,
+          followingCount,
+        };
+      })
+    );
+
+    return usersWithCounts;
   } catch (error) {
     console.error('Error fetching users:', error);
     // Retornar array vacío en lugar de lanzar error
@@ -817,26 +910,44 @@ export const fetchUsers = async (): Promise<RegisteredUser[]> => {
  */
 export const registerUserInDB = async (userData: Omit<RegisteredUser, 'id'>): Promise<RegisteredUser> => {
   try {
+    // Primero verificar si el usuario ya existe
+    const { data: existingUser, error: checkError } = await supabase
+      .from('users')
+      .select('id, username, pfp_url, status, followers_count, following_count')
+      .eq('username', userData.userName)
+      .maybeSingle();
+
+    // Si el usuario ya existe, retornarlo
+    if (existingUser && !checkError) {
+      return {
+        id: existingUser.id,
+        email: '',
+        password: '',
+        userName: existingUser.username,
+        userPfp: existingUser.pfp_url,
+        userStatus: existingUser.status,
+        bio: undefined,
+        followersCount: existingUser.followers_count || 0,
+        followingCount: existingUser.following_count || 0,
+      };
+    }
+
+    // Si hay un error que no sea "no encontrado", lanzarlo
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
+    }
+
+    // Si no existe, crear el usuario
     const insertData: any = {
       username: userData.userName, // Columna real: username
       pfp_url: userData.userPfp, // Columna real: pfp_url
       status: userData.userStatus, // Columna real: status
     };
     
-    // Solo incluir email si la columna existe
-    // if (userData.email) {
-    //   insertData.email = userData.email;
-    // }
-
     // Solo incluir password si se proporciona (para usuarios creados desde posts no se necesita)
     if (userData.password) {
       insertData.password = userData.password; // En producción usar hash
     }
-
-    // Solo incluir bio si se proporciona (la columna puede no existir en la tabla)
-    // if (userData.bio) {
-    //   insertData.bio = userData.bio;
-    // }
 
     const { data, error } = await supabase
       .from('users')
@@ -844,7 +955,31 @@ export const registerUserInDB = async (userData: Omit<RegisteredUser, 'id'>): Pr
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Si el error es de duplicado, intentar obtener el usuario existente
+      if (error.code === '23505') {
+        const { data: existingUserData } = await supabase
+          .from('users')
+          .select('id, username, pfp_url, status, followers_count, following_count')
+          .eq('username', userData.userName)
+          .single();
+        
+        if (existingUserData) {
+          return {
+            id: existingUserData.id,
+            email: '',
+            password: '',
+            userName: existingUserData.username,
+            userPfp: existingUserData.pfp_url,
+            userStatus: existingUserData.status,
+            bio: undefined,
+            followersCount: existingUserData.followers_count || 0,
+            followingCount: existingUserData.following_count || 0,
+          };
+        }
+      }
+      throw error;
+    }
     if (!data) throw new Error('No data returned from insert');
 
     return {
@@ -934,19 +1069,39 @@ export const updateUserInDB = async (userId: string, updates: Partial<Registered
 
 /**
  * Incrementar/decrementar followers de un usuario
+ * Si la columna no existe, no hace nada (no lanza error)
  */
 export const updateUserFollowers = async (userName: string, increment: boolean): Promise<void> => {
   try {
-    // Nota: Esta función requiere que la columna followers_count exista
-    // Si no existe, esta función no funcionará
+    // Intentar obtener el usuario con followers_count
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('followers_count')
-      .eq('username', userName) // Columna real: username
-      .single();
+      .eq('username', userName)
+      .maybeSingle();
 
-    if (fetchError) throw fetchError;
-    if (!user) throw new Error('User not found');
+    // Si hay error o la columna no existe, simplemente retornar sin hacer nada
+    if (fetchError) {
+      // Si el error es que la columna no existe, no es crítico
+      if (fetchError.message?.includes('column') && fetchError.message?.includes('does not exist')) {
+        console.warn('Column followers_count does not exist, skipping update');
+        return;
+      }
+      // Si es otro error, loguearlo pero no lanzarlo
+      console.warn('Error fetching user for followers update:', fetchError);
+      return;
+    }
+
+    if (!user) {
+      console.warn('User not found for followers update');
+      return;
+    }
+
+    // Si followers_count es undefined, la columna probablemente no existe
+    if (user.followers_count === undefined) {
+      console.warn('Column followers_count does not exist, skipping update');
+      return;
+    }
 
     const newCount = increment
       ? (user.followers_count || 0) + 1
@@ -955,12 +1110,299 @@ export const updateUserFollowers = async (userName: string, increment: boolean):
     const { error } = await supabase
       .from('users')
       .update({ followers_count: newCount })
-      .eq('username', userName); // Columna real: username
+      .eq('username', userName);
 
-    if (error) throw error;
+    if (error) {
+      // Si el error es que la columna no existe, no es crítico
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('Column followers_count does not exist, skipping update');
+        return;
+      }
+      console.warn('Error updating user followers:', error);
+      // No lanzar el error, solo loguearlo
+    }
+  } catch (error: any) {
+    // No lanzar el error, solo loguearlo
+    console.warn('Error updating user followers:', error);
+  }
+};
+
+/**
+ * Incrementar/decrementar following de un usuario
+ * Si la columna no existe, no hace nada (no lanza error)
+ */
+export const updateUserFollowing = async (userId: string, increment: boolean): Promise<void> => {
+  try {
+    const { data: user, error: fetchError } = await supabase
+      .from('users')
+      .select('following_count')
+      .eq('id', userId)
+      .maybeSingle();
+
+    // Si hay error o la columna no existe, simplemente retornar sin hacer nada
+    if (fetchError) {
+      // Si el error es que la columna no existe, no es crítico
+      if (fetchError.message?.includes('column') && fetchError.message?.includes('does not exist')) {
+        console.warn('Column following_count does not exist, skipping update');
+        return;
+      }
+      // Si es otro error, loguearlo pero no lanzarlo
+      console.warn('Error fetching user for following update:', fetchError);
+      return;
+    }
+
+    if (!user) {
+      console.warn('User not found for following update');
+      return;
+    }
+
+    // Si following_count es undefined, la columna probablemente no existe
+    if (user.following_count === undefined) {
+      console.warn('Column following_count does not exist, skipping update');
+      return;
+    }
+
+    const newCount = increment
+      ? (user.following_count || 0) + 1
+      : Math.max(0, (user.following_count || 0) - 1);
+
+    const { error } = await supabase
+      .from('users')
+      .update({ following_count: newCount })
+      .eq('id', userId);
+
+    if (error) {
+      // Si el error es que la columna no existe, no es crítico
+      if (error.message?.includes('column') && error.message?.includes('does not exist')) {
+        console.warn('Column following_count does not exist, skipping update');
+        return;
+      }
+      console.warn('Error updating user following:', error);
+      // No lanzar el error, solo loguearlo
+    }
+  } catch (error: any) {
+    // No lanzar el error, solo loguearlo
+    console.warn('Error updating user following:', error);
+  }
+};
+
+/**
+ * Verificar si un usuario sigue a otro
+ */
+export const checkIfFollowing = async (followerId: string, followingId: string): Promise<boolean> => {
+  try {
+    // Usar count para verificar si existe la relación (más eficiente y confiable)
+    const { count, error } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', followerId)
+      .eq('following_id', followingId);
+
+    if (error) {
+      // Si el error es que no se encontró (PGRST116), la relación no existe
+      if (error.code === 'PGRST116') {
+        return false;
+      }
+      console.warn('Error checking follow relationship:', error);
+      return false;
+    }
+
+    return (count || 0) > 0;
   } catch (error) {
-    console.error('Error updating user followers:', error);
+    console.warn('Error checking follow relationship:', error);
+    return false;
+  }
+};
+
+/**
+ * Toggle follow/unfollow relación entre usuarios
+ * Guarda la relación en la tabla 'follows' con follower_id y following_id
+ */
+export const toggleFollowInDB = async (followerId: string, followedUserName: string, isFollowing: boolean): Promise<void> => {
+  try {
+    // Obtener el ID del usuario seguido
+    const { data: followedUser, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', followedUserName)
+      .maybeSingle();
+
+    if (userError && userError.code !== 'PGRST116') {
+      throw userError;
+    }
+    if (!followedUser) {
+      throw new Error('User to follow not found');
+    }
+
+    const followingId = followedUser.id;
+
+    // SIEMPRE verificar primero el estado real en la base de datos
+    const relationshipExists = await checkIfFollowing(followerId, followingId);
+
+    if (isFollowing) {
+      // Eliminar relación de seguimiento (dejar de seguir)
+      if (!relationshipExists) {
+        // La relación no existe, no hay nada que eliminar - esto es válido
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', followerId)
+        .eq('following_id', followingId);
+
+      if (deleteError) {
+        // Si el error es RLS (Row Level Security), es un problema de permisos
+        if (deleteError.message?.includes('row-level security') || deleteError.message?.includes('RLS')) {
+          console.warn('RLS policy prevents deleting follow relationship. Please check Supabase RLS policies.');
+          throw new Error('No tienes permisos para dejar de seguir a este usuario. Por favor, verifica las políticas de seguridad en Supabase.');
+        }
+        // Si el error es que no existe la relación, no es crítico
+        if (deleteError.code === 'PGRST116') {
+          return;
+        }
+        throw deleteError;
+      }
+    } else {
+      // Agregar relación de seguimiento (seguir)
+      // Si la relación ya existe, no intentar insertar (evitar error 409)
+      if (relationshipExists) {
+        // La relación ya existe en la DB - esto significa que el estado local estaba desincronizado
+        // No es un error, simplemente retornar (el estado se actualizará en el thunk)
+        return;
+      }
+
+      // Solo intentar insertar si la relación NO existe
+      const { error: insertError } = await supabase
+        .from('follows')
+        .insert([{ follower_id: followerId, following_id: followingId }]);
+
+      if (insertError) {
+        // Si el error es RLS (Row Level Security), es un problema de permisos
+        if (insertError.message?.includes('row-level security') || insertError.message?.includes('RLS')) {
+          console.warn('RLS policy prevents inserting follow relationship. Please check Supabase RLS policies.');
+          throw new Error('No tienes permisos para seguir a este usuario. Por favor, verifica las políticas de seguridad en Supabase.');
+        }
+        // Si el error es de duplicado (23505, PGRST301, o 409), la relación ya existe
+        // Esto puede pasar en casos de race condition (otra petición insertó entre la verificación y el insert)
+        // No es un error crítico - la relación ya existe, que es lo que queríamos lograr
+        if (insertError.code === '23505' || insertError.code === 'PGRST301' || insertError.status === 409 || insertError.code === '409') {
+          // La relación ya existe en la DB - esto es válido, no lanzar error
+          return;
+        }
+        throw insertError;
+      }
+    }
+  } catch (error: any) {
+    // Si es un error de RLS, proporcionar un mensaje más claro
+    if (error.message?.includes('row-level security') || error.message?.includes('RLS')) {
+      throw new Error('No tienes permisos para realizar esta acción. Por favor, verifica las políticas de seguridad en Supabase.');
+    }
+    // Si es un error 409 (Conflict), probablemente es un duplicado (race condition)
+    if (error.status === 409 || error.code === '409' || error.code === '23505' || error.code === 'PGRST301') {
+      // La relación ya existe - no es un error, simplemente retornar
+      return;
+    }
+    console.error('Error toggling follow:', error);
     throw error;
+  }
+};
+
+/**
+ * Obtener usuarios que sigue el usuario actual
+ * Usa la tabla 'follows' con follower_id y following_id
+ * follower_id = userId (el usuario actual)
+ * following_id = los usuarios que el usuario actual está siguiendo
+ */
+export const fetchUserFollowing = async (userId: string): Promise<Record<string, boolean>> => {
+  try {
+    // Obtener la lista de usuarios que el usuario actual está siguiendo
+    const { data, error } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    if (error) {
+      // Si la tabla no existe, retornar objeto vacío
+      if (error.message.includes('relation "follows" does not exist')) {
+        return {};
+      }
+      console.warn('Error fetching user following:', error);
+      return {};
+    }
+
+    // Obtener los usernames de los usuarios seguidos
+    const followingIds = data?.map(f => f.following_id).filter(Boolean) || [];
+    if (followingIds.length === 0) return {};
+
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, username')
+      .in('id', followingIds);
+
+    if (usersError) {
+      console.warn('Error fetching followed users:', usersError);
+      return {};
+    }
+
+    const following: Record<string, boolean> = {};
+    users?.forEach(user => {
+      if (user.username) {
+        following[user.username] = true;
+      }
+    });
+
+    return following;
+  } catch (error) {
+    console.error('Error fetching user following:', error);
+    return {};
+  }
+};
+
+/**
+ * Obtener contador de seguidores de un usuario
+ * Usa count en la tabla 'follows'
+ */
+export const getFollowersCount = async (userId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId);
+
+    if (error) {
+      console.warn('Error getting followers count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.warn('Error getting followers count:', error);
+    return 0;
+  }
+};
+
+/**
+ * Obtener contador de usuarios que sigue un usuario
+ * Usa count en la tabla 'follows'
+ */
+export const getFollowingCount = async (userId: string): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', userId);
+
+    if (error) {
+      console.warn('Error getting following count:', error);
+      return 0;
+    }
+
+    return count || 0;
+  } catch (error) {
+    console.warn('Error getting following count:', error);
+    return 0;
   }
 };
 

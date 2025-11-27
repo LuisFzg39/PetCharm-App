@@ -191,14 +191,14 @@ export const updateUserProfileAsync = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      // Convertir User updates a RegisteredUser format
+      // Convertir User updates a RegisteredUser format (que updateUserInDB espera)
       const dbUpdates: any = {};
-      if (updates.userName !== undefined) dbUpdates.user_name = updates.userName;
-      if (updates.userPfp !== undefined) dbUpdates.user_pfp = updates.userPfp;
-      if (updates.userStatus !== undefined) dbUpdates.user_status = updates.userStatus;
+      if (updates.userName !== undefined) dbUpdates.userName = updates.userName;
+      if (updates.userPfp !== undefined) dbUpdates.userPfp = updates.userPfp;
+      if (updates.userStatus !== undefined) dbUpdates.userStatus = updates.userStatus;
       if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
-      if (updates.followersCount !== undefined) dbUpdates.followers_count = updates.followersCount;
-      if (updates.followingCount !== undefined) dbUpdates.following_count = updates.followingCount;
+      if (updates.followersCount !== undefined) dbUpdates.followersCount = updates.followersCount;
+      if (updates.followingCount !== undefined) dbUpdates.followingCount = updates.followingCount;
       
       await updateUserInDB(userId, dbUpdates);
       return updates;
@@ -234,6 +234,16 @@ const authSlice = createSlice({
     incrementUserPostsCount: (state) => {
       if (state.currentUser && state.currentUser.postsCount !== undefined) {
         state.currentUser.postsCount += 1;
+      }
+    },
+    
+    // Incrementar/decrementar contador de following del usuario (optimistic update)
+    updateUserFollowingCount: (state, action: PayloadAction<boolean>) => {
+      if (state.currentUser) {
+        const increment = action.payload;
+        state.currentUser.followingCount = increment
+          ? (state.currentUser.followingCount || 0) + 1
+          : Math.max(0, (state.currentUser.followingCount || 0) - 1);
       }
     },
     
@@ -363,6 +373,7 @@ export const {
   logoutUser, 
   updateUserStatus,
   incrementUserPostsCount,
+  updateUserFollowingCount,
   clearError,
 } = authSlice.actions;
 
