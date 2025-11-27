@@ -212,8 +212,16 @@ const postsSlice = createSlice({
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
         state.loading = false;
-        // Siempre actualizar con los datos más recientes de Supabase
-        state.posts = action.payload;
+        // Eliminar duplicados basándose en el ID antes de actualizar
+        // Usar un Map para mantener solo la primera ocurrencia de cada post
+        const uniquePostsMap = new Map<string, Post>();
+        action.payload.forEach(post => {
+          if (!uniquePostsMap.has(post.id)) {
+            uniquePostsMap.set(post.id, post);
+          }
+        });
+        // Convertir el Map de vuelta a array
+        state.posts = Array.from(uniquePostsMap.values());
         state.error = null;
       })
       .addCase(fetchPosts.rejected, (state, action) => {
@@ -229,6 +237,7 @@ const postsSlice = createSlice({
       })
       .addCase(createPostAsync.fulfilled, (state, action) => {
         state.loading = false;
+        // Agregar el nuevo post al inicio de la lista
         state.posts.unshift(action.payload);
         state.error = null;
       })

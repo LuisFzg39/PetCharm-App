@@ -9,8 +9,14 @@ function CreatePost() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [pictureUrl, setPictureUrl] = useState("");
   const [caption, setCaption] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handlePostClick() {
+    // Prevenir múltiples envíos simultáneos
+    if (isSubmitting) {
+      return;
+    }
+
     // validation
     if (!pictureUrl.trim() || !caption.trim()) {
       alert("Please add both a picture URL and a caption!");
@@ -22,6 +28,7 @@ function CreatePost() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       // Dispatch async action to create post
       const result = await dispatch(createPostAsync({
@@ -30,19 +37,33 @@ function CreatePost() {
       }));
 
       if (createPostAsync.fulfilled.match(result)) {
-        // Recargar posts para tener los datos más recientes desde Supabase
-        await dispatch(fetchPosts());
+        // El post ya fue agregado al estado por el reducer
+        // Solo recargar posts después de un pequeño delay para asegurar sincronización
+        // Esto previene duplicados mientras permite que el post optimista se muestre
+        setTimeout(async () => {
+          await dispatch(fetchPosts());
+        }, 500);
         
         // reset
         setPictureUrl("");
         setCaption("");
         setIsExpanded(false);
       } else {
-        alert("Error al crear el post: " + (result.payload as string));
+        const errorMessage = result.payload as string;
+        // Si el error menciona que el post podría haberse creado, recargar posts
+        if (errorMessage?.includes('podría haberse creado') || errorMessage?.includes('recarga')) {
+          await dispatch(fetchPosts());
+          alert("El post podría haberse creado. Por favor, verifica si aparece en el feed.");
+        } else {
+          alert("Error al crear el post: " + errorMessage);
+        }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error creating post:", err);
-      alert("Something went wrong while creating the post — check console.");
+      const errorMsg = err?.message || "Something went wrong while creating the post";
+      alert(errorMsg);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -124,9 +145,14 @@ function CreatePost() {
           <div className="w-full lg:w-auto flex justify-end lg:absolute lg:bottom-4 lg:right-8">
             <button
               onClick={handlePostClick}
-              className="w-full lg:w-[220px] h-[38px] lg:h-[38px] rounded-[40px] bg-[#FCB43E] text-white border-none text-base lg:text-lg font-bold hover:bg-[#eaa02b] transition-colors"
+              disabled={isSubmitting}
+              className={`w-full lg:w-[220px] h-[38px] lg:h-[38px] rounded-[40px] text-white border-none text-base lg:text-lg font-bold transition-colors ${
+                isSubmitting 
+                  ? 'bg-[#b88a2a] cursor-not-allowed' 
+                  : 'bg-[#FCB43E] hover:bg-[#eaa02b]'
+              }`}
             >
-              Post your pet
+              {isSubmitting ? 'Posting...' : 'Post your pet'}
             </button>
           </div>
         </div>

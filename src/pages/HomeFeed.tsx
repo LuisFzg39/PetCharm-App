@@ -37,22 +37,27 @@ function HomeFeed() {
         <CreatePost />
       </div>
 
-      {/* Render all posts */}
+      {/* Render all posts - filter duplicates by ID to prevent React key warnings */}
       <div className="w-full lg:w-auto px-5 lg:px-0">
-        {posts.map((post) => (
-          <Post
-            key={post.id}
-            postId={post.id}
-            userName={post.userName}
-            userPfp={post.userPfp}
-            userStatus={post.userStatus}
-            postImg={post.postImg}
-            postCaption={post.postCaption}
-            likes={post.likes}
-            commentsCount={post.commentsCount}
-            comments={post.comments}
-          />
-        ))}
+        {posts
+          .filter((post, index, self) => 
+            // Mantener solo la primera ocurrencia de cada ID
+            index === self.findIndex(p => p.id === post.id)
+          )
+          .map((post) => (
+            <Post
+              key={post.id}
+              postId={post.id}
+              userName={post.userName}
+              userPfp={post.userPfp}
+              userStatus={post.userStatus}
+              postImg={post.postImg}
+              postCaption={post.postCaption}
+              likes={post.likes}
+              commentsCount={post.commentsCount}
+              comments={post.comments}
+            />
+          ))}
       </div>
     </div>
   );

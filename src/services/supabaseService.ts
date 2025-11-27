@@ -10,10 +10,11 @@ import type { RegisteredUser } from '../store/slices/usersSlice';
  */
 export const fetchPosts = async (): Promise<Post[]> => {
   try {
-    // Obtener posts (sin created_at ya que no existe en la tabla)
+    // Obtener posts ordenados por fecha de creación descendente
     const { data: postsData, error: postsError } = await supabase
       .from('posts')
-      .select('id, image_url, caption, user_id');
+      .select('id, image_url, caption, user_id, created_at')
+      .order('created_at', { ascending: false });
 
     if (postsError) {
       console.error('Error fetching posts:', postsError);
@@ -69,13 +70,13 @@ export const fetchPosts = async (): Promise<Post[]> => {
       const commentUserIds = commentsData
         .map(c => c.user_id)
         .filter(id => id && !usersMap.has(id));
-      
+
       if (commentUserIds.length > 0) {
         const { data: commentUsersData } = await supabase
           .from('users')
           .select('id, username, pfp_url, status')
           .in('id', commentUserIds);
-        
+
         commentUsersData?.forEach(user => {
           usersMap.set(user.id, user);
         });
@@ -115,7 +116,7 @@ export const fetchPosts = async (): Promise<Post[]> => {
     // Mapear posts y agregar comentarios
     const posts: Post[] = postsData.map((post: any) => {
       const user = usersMap.get(post.user_id);
-      
+
       const postComments = (commentsData || [])
         .filter((comment: any) => comment.post_id === post.id)
         .map((comment: any) => {
@@ -157,49 +158,60 @@ export const fetchPosts = async (): Promise<Post[]> => {
 export const createPostInDB = async (
   postData: CreatePostPayload & { userId: string }
 ): Promise<Post> => {
-  try {
-    // Insertar post con user_id
-    const { data, error } = await supabase
-      .from('posts')
-      .insert([
-        {
-          user_id: postData.userId,
-          image_url: postData.imageUrl,
-          caption: postData.caption,
-        },
-      ])
-      .select('id, image_url, caption, user_id')
-      .single();
+  // Generar ID cliente-side para asegurar unicidad y evitar problemas con defaults de DB
+  const newPostId = crypto.randomUUID();
 
-    if (error) throw error;
-    if (!data) throw new Error('No data returned from insert');
+  const { data, error } = await supabase
+    .from('posts')
+    .insert([
+      {
+        id: newPostId,
+        user_id: postData.userId,
+        image_url: postData.imageUrl,
+        caption: postData.caption,
+      },
+    ])
+    .select()
+    .single();
 
-    // Obtener datos del usuario
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('id, username, pfp_url, status')
-      .eq('id', postData.userId)
-      .single();
-
-    if (userError) {
-      console.warn('Error fetching user for post:', userError);
+  if (error) {
+    console.error('Error creating post:', JSON.stringify(error, null, 2));
+    // Log detailed error for debugging
+    if (error.code === '42501') {
+      console.error('RLS Policy Violation: Check if "Users can create posts" policy exists and allows this user.');
     }
-
-    return {
-      id: data.id,
-      userName: userData?.username || 'unknown',
-      userPfp: userData?.pfp_url || '',
-      userStatus: userData?.status || '',
-      postImg: data.image_url || '',
-      postCaption: data.caption || '',
-      likes: 0,
-      commentsCount: 0,
-      comments: [],
-    };
-  } catch (error) {
-    console.error('Error creating post:', error);
+    if (error.code === '23505' || error.code === '409') {
+      console.error('Unique Constraint Violation: A record with this ID or unique field already exists.');
+    }
     throw error;
   }
+
+  if (!data) {
+    throw new Error('No data returned from insert');
+  }
+
+  // Obtener datos del usuario
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('id, username, pfp_url, status')
+    .eq('id', postData.userId)
+    .single();
+
+  if (userError) {
+    console.warn('Error fetching user for post:', userError);
+  }
+
+  return {
+    id: data.id,
+    userName: userData?.username || 'unknown',
+    userPfp: userData?.pfp_url || '',
+    userStatus: userData?.status || '',
+    postImg: data.image_url || '',
+    postCaption: data.caption || '',
+    likes: 0,
+    commentsCount: 0,
+    comments: [],
+  };
 };
 
 /**
@@ -236,7 +248,7 @@ export const deletePostFromDB = async (postId: string): Promise<void> => {
 
     // Eliminar likes asociados
     await supabase.from('likes').delete().eq('post_id', postId);
-    
+
     // Eliminar comentarios y sus likes
     const { data: comments } = await supabase
       .from('comments')
@@ -247,9 +259,9 @@ export const deletePostFromDB = async (postId: string): Promise<void> => {
       const commentIds = comments.map(c => c.id);
       await supabase.from('comment_likes').delete().in('comment_id', commentIds);
     }
-    
+
     await supabase.from('comments').delete().eq('post_id', postId);
-    
+
     // Eliminar el post
     const { error } = await supabase.from('posts').delete().eq('id', postId);
     if (error) throw error;
@@ -286,10 +298,14 @@ export const addCommentToDB = async (
   commentData: CreateCommentPayload & { userId: string }
 ): Promise<Comment> => {
   try {
+    // Generar ID cliente-side
+    const newCommentId = crypto.randomUUID();
+
     const { data, error } = await supabase
       .from('comments')
       .insert([
         {
+          id: newCommentId,
           post_id: commentData.postId,
           user_id: commentData.userId,
           text: commentData.commentTxt,
@@ -298,8 +314,11 @@ export const addCommentToDB = async (
       .select('id, post_id, text, user_id')
       .single();
 
-    if (error) throw error;
-    if (!data) throw new Error('No data returned from insert');
+    if (error) {
+      console.error('Error adding comment:', JSON.stringify(error, null, 2));
+      if (error.code === '42501') console.error('RLS Policy Violation for Comments');
+      throw error;
+    }
 
     // Obtener datos del usuario
     const { data: userData, error: userError } = await supabase
@@ -333,7 +352,7 @@ export const deleteCommentFromDB = async (commentId: string): Promise<void> => {
   try {
     // Eliminar likes del comentario
     await supabase.from('comment_likes').delete().eq('comment_id', commentId);
-    
+
     // Eliminar el comentario
     const { error } = await supabase.from('comments').delete().eq('id', commentId);
     if (error) throw error;
@@ -349,59 +368,113 @@ export const deleteCommentFromDB = async (commentId: string): Promise<void> => {
  * Toggle like en un post
  * Usa user_id (UUID) del usuario autenticado
  */
-export const togglePostLikeInDB = async (postId: string, userId: string, isLiked: boolean): Promise<void> => {
-  try {
-    // Primero verificar si el like ya existe usando maybeSingle para evitar errores cuando no existe
-    const { data: existingLike, error: checkError } = await supabase
+export const togglePostLikeInDB = async (postId: string, userId: string, isLiked: boolean): Promise<boolean> => {
+  // Función helper para verificar el estado real del like
+  const verifyLikeState = async (): Promise<boolean> => {
+    const { data: actualLike, error: verifyError } = await supabase
       .from('likes')
       .select('post_id')
       .eq('post_id', postId)
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Si hay un error que no sea "no encontrado", lanzarlo
-    if (checkError && checkError.code !== 'PGRST116') {
-      throw checkError;
+    // Si hay error de verificación, asumir que no existe (más seguro)
+    if (verifyError && verifyError.code !== 'PGRST116') {
+      console.warn('Error verifying like state:', verifyError);
+      return false;
     }
 
-    const likeExists = !!existingLike;
+    return !!actualLike;
+  };
 
+  try {
+    // Siempre verificar el estado actual primero para evitar conflictos
+    const currentState = await verifyLikeState();
+
+    // Si el estado actual ya es el deseado, no hacer nada
+    if (isLiked && !currentState) {
+      // Queremos eliminar pero no existe - ya está en el estado correcto
+      return false;
+    }
+    if (!isLiked && currentState) {
+      // Queremos agregar pero ya existe - ya está en el estado correcto
+      return true;
+    }
+
+    // El estado necesita cambiar, realizar la operación
     if (isLiked) {
-      // Eliminar like solo si existe
-      if (likeExists) {
-        const { error } = await supabase
+      // Eliminar like (solo si existe)
+      if (currentState) {
+        const { error: deleteError } = await supabase
           .from('likes')
           .delete()
           .eq('post_id', postId)
           .eq('user_id', userId);
 
-        if (error) throw error;
-      }
-    } else {
-      // Agregar like solo si no existe
-      if (!likeExists) {
-        const { error } = await supabase
-          .from('likes')
-          .insert([{ post_id: postId, user_id: userId }]);
-
-        // Si el error es de duplicado o conflicto, ignorarlo (ya existe)
-        if (error) {
-          // Códigos de error comunes: 23505 (unique violation), 409 (conflict)
-          if (error.code === '23505' || error.code === 'PGRST301' || error.message?.includes('duplicate') || error.message?.includes('conflict')) {
-            console.warn('Like already exists, ignoring duplicate insert');
-            return;
+        if (deleteError) {
+          // Si hay error, verificar el estado real
+          if (deleteError.code !== 'PGRST116') {
+            console.warn('Error deleting like, verifying state:', deleteError);
+            return await verifyLikeState();
           }
-          throw error;
+          // Si es "no encontrado", el like no existía, estado final es false
+          return false;
         }
+        // Delete exitoso, estado final es false
+        return false;
       }
+      // Ya no existe, retornar false
+      return false;
+    } else {
+      // Agregar like (solo si no existe)
+      if (!currentState) {
+        // Generar ID cliente-side para evitar conflictos
+        const newLikeId = crypto.randomUUID();
+
+        const { error: insertError } = await supabase
+          .from('likes')
+          .insert([{ id: newLikeId, post_id: postId, user_id: userId }]);
+
+        if (insertError) {
+          // Si es un error de conflicto (409), el like ya existe (race condition)
+          const isConflictError =
+            insertError.code === '23505' ||
+            insertError.code === 'PGRST301' ||
+            insertError.message?.includes('duplicate') ||
+            insertError.message?.includes('conflict') ||
+            insertError.message?.includes('409') ||
+            String(insertError).includes('409');
+
+          if (isConflictError) {
+            // El like ya existe, así que el resultado deseado (que esté likeado) se cumple.
+            // No necesitamos hacer nada más ni lanzar error.
+            return true;
+          }
+          // Otro tipo de error, lanzarlo
+          throw insertError;
+        }
+        // Insert exitoso, estado final es true
+        return true;
+      }
+      // Ya existe, retornar true
+      return true;
     }
   } catch (error: any) {
-    // Si es un error de duplicado o conflicto, no es crítico
-    if (error.code === '23505' || error.code === 'PGRST301' || error.code === 409 || error.message?.includes('duplicate') || error.message?.includes('conflict')) {
-      console.warn('Like already exists, ignoring duplicate insert');
-      return;
+    // Si es un error de conflicto, verificar el estado real
+    const isConflictError =
+      error.code === '23505' ||
+      error.code === 'PGRST301' ||
+      error.message?.includes('duplicate') ||
+      error.message?.includes('conflict') ||
+      error.message?.includes('409') ||
+      String(error).includes('409');
+
+    if (isConflictError) {
+      // Verificar el estado real sin loguear (es esperado en race conditions)
+      return await verifyLikeState();
     }
     console.error('Error toggling post like:', error);
+    if (error.code === '42501') console.error('RLS Policy Violation for Likes');
     throw error;
   }
 };
@@ -460,12 +533,29 @@ export const toggleCommentLikeInDB = async (commentId: string, userId: string, i
 
       if (error) throw error;
     } else {
-      // Agregar like
+      // Agregar like - Generar ID cliente-side
+      const newLikeId = crypto.randomUUID();
+
       const { error } = await supabase
         .from('comment_likes')
-        .insert([{ comment_id: commentId, user_id: userId }]);
+        .insert([{ id: newLikeId, comment_id: commentId, user_id: userId }]);
 
-      if (error) throw error;
+      if (error) {
+        // Si es un error de conflicto (409), el like ya existe
+        const isConflictError =
+          error.code === '23505' ||
+          error.code === 'PGRST301' ||
+          error.message?.includes('duplicate') ||
+          error.message?.includes('conflict') ||
+          error.message?.includes('409') ||
+          String(error).includes('409');
+
+        if (isConflictError) {
+          // El like ya existe, no es un error real
+          return;
+        }
+        throw error;
+      }
     }
   } catch (error) {
     console.error('Error toggling comment like:', error);
@@ -520,7 +610,7 @@ export const signUpWithAuth = async (
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     if (!emailRegex.test(normalizedEmail)) {
       throw new Error('El formato del email no es válido');
     }
@@ -561,11 +651,11 @@ export const signUpWithAuth = async (
       // Retornar el mensaje de error de Supabase si es claro
       throw new Error(authError.message || 'Error al crear la cuenta');
     }
-    
+
     // Nota: Si Supabase requiere confirmación de email, el usuario recibirá un email
     // pero aún así podemos crear el perfil en la tabla users
     // En desarrollo, puedes deshabilitar "Confirm email" en Supabase Dashboard > Authentication > Settings
-    
+
     if (!authData.user) {
       throw new Error('No se pudo crear el usuario');
     }
@@ -578,13 +668,13 @@ export const signUpWithAuth = async (
       status: userData.userStatus, // Columna real: status
       pfp_url: userData.userPfp, // Columna real: pfp_url
     };
-    
+
     // Solo incluir bio si se proporciona (y si la columna existe en la tabla)
     // Por ahora lo omitimos ya que la columna no existe en Supabase
     // if (userData.bio) {
     //   userInsertData.bio = userData.bio;
     // }
-    
+
     console.log('Intentando insertar perfil en tabla users:', userInsertData);
     const { data: userDataResult, error: userError } = await supabase
       .from('users')
@@ -595,7 +685,7 @@ export const signUpWithAuth = async (
     if (userError) {
       // Si falla la inserción en users, intentar obtener el perfil o crear uno básico
       console.warn('Error al crear perfil en tabla users:', userError);
-      
+
       // Intentar obtener el perfil por si ya existe
       const { data: existingProfile } = await supabase
         .from('users')
@@ -760,7 +850,7 @@ export const getCurrentUserProfile = async () => {
   try {
     // Primero verificar si hay una sesión activa
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
+
     if (sessionError || !session || !session.user) {
       return null;
     }
@@ -943,7 +1033,7 @@ export const registerUserInDB = async (userData: Omit<RegisteredUser, 'id'>): Pr
       pfp_url: userData.userPfp, // Columna real: pfp_url
       status: userData.userStatus, // Columna real: status
     };
-    
+
     // Solo incluir password si se proporciona (para usuarios creados desde posts no se necesita)
     if (userData.password) {
       insertData.password = userData.password; // En producción usar hash
@@ -963,7 +1053,7 @@ export const registerUserInDB = async (userData: Omit<RegisteredUser, 'id'>): Pr
           .select('id, username, pfp_url, status, followers_count, following_count')
           .eq('username', userData.userName)
           .single();
-        
+
         if (existingUserData) {
           return {
             id: existingUserData.id,
@@ -1044,7 +1134,7 @@ export const findUserByCredentials = async (email: string, password: string): Pr
 export const updateUserInDB = async (userId: string, updates: Partial<RegisteredUser>): Promise<void> => {
   try {
     const updateData: any = {};
-    
+
     // Actualizar solo las columnas que existen en la tabla
     if (updates.userName !== undefined) updateData.username = updates.userName; // Columna real: username
     if (updates.userPfp !== undefined) updateData.pfp_url = updates.userPfp; // Columna real: pfp_url

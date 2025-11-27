@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAppDispatch, useAuth, usePosts, useUsers, useInteractions } from "../../store/hooks";
 import { toggleFollowAsync, fetchUserInteractions, toggleFollow } from "../../store/slices/interactionsSlice";
 import { fetchUsers } from "../../store/slices/usersSlice";
-import { checkAuthSession, updateUserFollowingCount } from "../../store/slices/authSlice";
+import { updateUserFollowingCount } from "../../store/slices/authSlice";
 import Post from "../home/Post";
 import MobileNavBar from "../navigation/MobileNavBar";
 
@@ -15,10 +15,10 @@ function UserProfile() {
   const { registeredUsers } = useUsers();
   const interactions = useInteractions();
   const following = interactions?.following || {};
-  
+
   // Filtrar posts del usuario del perfil
   const userPosts = posts.filter(post => post.userName === username);
-  
+
   // Función helper para normalizar rutas de imágenes
   const normalizeImagePath = (path: string): string => {
     if (!path) return path;
@@ -30,10 +30,10 @@ function UserProfile() {
     }
     return path;
   };
-  
+
   // Buscar el usuario del perfil en registeredUsers primero (siempre buscar de nuevo para obtener updates)
   let profileUser = registeredUsers.find(u => u.userName === username);
-  
+
   // Si no está en registeredUsers, crear un perfil desde los posts
   if (!profileUser && userPosts.length > 0) {
     const firstPost = userPosts[0];
@@ -49,7 +49,7 @@ function UserProfile() {
       followingCount: 0,
     };
   }
-  
+
   // Normalizar la ruta de la imagen del perfil si existe (siempre)
   if (profileUser) {
     profileUser = {
@@ -57,7 +57,7 @@ function UserProfile() {
       userPfp: normalizeImagePath(profileUser.userPfp),
     };
   }
-  
+
   // Cargar usuarios e interacciones al montar
   useEffect(() => {
     dispatch(fetchUsers());
@@ -70,26 +70,26 @@ function UserProfile() {
 
   // Verificar si el usuario actual sigue al usuario del perfil (igual que isLiked)
   const isFollowing = profileUser ? (following[profileUser.userName] || false) : false;
-  
+
   const handleFollowToggle = async () => {
     if (!profileUser || !username || !currentUser) return;
-    
+
     // Guardar el estado actual ANTES del toggle optimista
     const currentFollowingState = isFollowing;
-    
+
     // Actualización optimista: actualizar el estado inmediatamente
     dispatch(toggleFollow(profileUser.userName));
     // Actualizar optimísticamente el contador de following del usuario actual
     dispatch(updateUserFollowingCount(!currentFollowingState)); // true = incrementar, false = decrementar
-    
+
     try {
       // Toggle follow state y actualizar contadores en Supabase
       // Pasar el estado anterior para que el thunk use el valor correcto
-      const result = await dispatch(toggleFollowAsync({ 
+      const result = await dispatch(toggleFollowAsync({
         userName: profileUser.userName,
-        currentIsFollowing: currentFollowingState 
+        currentIsFollowing: currentFollowingState
       }));
-      
+
       // Si falló, el reducer revertirá el cambio automáticamente
       if (toggleFollowAsync.rejected.match(result)) {
         // Revertir el cambio optimista del contador
@@ -102,13 +102,12 @@ function UserProfile() {
           console.warn('Error al hacer follow/unfollow:', errorMessage);
         }
       } else if (toggleFollowAsync.fulfilled.match(result)) {
-        // Si fue exitoso, recargar usuarios, interacciones y perfil del usuario actual
-        // para actualizar todos los contadores (esto sincronizará el contador optimista con la DB)
-        // IMPORTANTE: Recargar interacciones para sincronizar el estado con la DB
+        // Si fue exitoso, recargar usuarios e interacciones para sincronizar con la DB
+        // Esto asegura que el estado de "following" esté sincronizado
+        // fetchUserInteractions NO causa reload, solo actualiza el estado de Redux
         Promise.all([
           dispatch(fetchUsers()),
-          dispatch(fetchUserInteractions()), // Esto sincronizará el estado following con la DB
-          dispatch(checkAuthSession()), // Recargar perfil del usuario actual para actualizar followingCount
+          dispatch(fetchUserInteractions()),
         ]).catch(err => console.warn('Error recargando datos después de follow:', err));
       }
     } catch (error) {
@@ -118,7 +117,7 @@ function UserProfile() {
       console.warn('Error en handleFollowToggle:', error);
     }
   };
-  
+
   if (!currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -126,7 +125,7 @@ function UserProfile() {
       </div>
     );
   }
-  
+
   if (!profileUser) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -134,12 +133,12 @@ function UserProfile() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#f9f5f2] font-sans relative overflow-x-hidden">
       {/* Mobile: Navbars */}
       <MobileNavBar />
-      
+
       {/* Desktop: NavBarHome se renderiza desde App.tsx */}
       {/* Header con fondo de ilustración */}
       <div className="w-full h-80 bg-[url('/assets/vectors/img/ProfileBanner.svg')] bg-cover bg-center flex items-end justify-center">
@@ -195,11 +194,10 @@ function UserProfile() {
         <div className="mt-6">
           <button
             onClick={handleFollowToggle}
-            className={`px-8 py-2 rounded-full border-2 transition-colors ${
-              isFollowing
-                ? "bg-white border-purple-400 text-purple-600 hover:bg-purple-50"
-                : "bg-purple-400 border-purple-400 text-white hover:bg-purple-500"
-            } font-medium`}
+            className={`px-8 py-2 rounded-full border-2 transition-colors ${isFollowing
+              ? "bg-white border-purple-400 text-purple-600 hover:bg-purple-50"
+              : "bg-purple-400 border-purple-400 text-white hover:bg-purple-500"
+              } font-medium`}
           >
             {isFollowing ? "Following" : "Follow"}
           </button>

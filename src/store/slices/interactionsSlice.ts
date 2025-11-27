@@ -78,15 +78,35 @@ export const togglePostLikeAsync = createAsyncThunk(
       
       const state = getState() as any;
       const currentIsLiked = state.interactions.likedPosts[postId] || false;
-      const newIsLiked = !currentIsLiked;
       
-      // Actualizar en la base de datos
-      await togglePostLikeInDB(postId, user.id, currentIsLiked);
+      // Actualizar en la base de datos y obtener el nuevo estado real
+      const newIsLiked = await togglePostLikeInDB(postId, user.id, currentIsLiked);
       
       return { postId, isLiked: newIsLiked };
     } catch (error: any) {
-      // Si es un error de duplicado, no es crítico, continuar
-      if (error.code === '23505') {
+      // Si hay un error, intentar verificar el estado real en la DB
+      const isConflictError = 
+        error.code === '23505' || 
+        error.code === 'PGRST301' || 
+        error.message?.includes('duplicate') || 
+        error.message?.includes('conflict') ||
+        error.message?.includes('409') ||
+        String(error).includes('409');
+      
+      if (isConflictError) {
+        // Para conflictos, verificar el estado real en la DB
+        try {
+          const user = await getCurrentUser();
+          if (user) {
+            const { fetchUserPostLikes } = await import('../../services/supabaseService');
+            const likes = await fetchUserPostLikes(user.id);
+            const actualIsLiked = likes[postId] || false;
+            return { postId, isLiked: actualIsLiked };
+          }
+        } catch (verifyError) {
+          console.warn('Could not verify like state after conflict:', verifyError);
+        }
+        // Si no podemos verificar, usar el estado opuesto al actual
         const state = getState() as any;
         const currentIsLiked = state.interactions.likedPosts[postId] || false;
         return { postId, isLiked: !currentIsLiked };
@@ -249,11 +269,27 @@ const interactionsSlice = createSlice({
       })
       .addCase(togglePostLikeAsync.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-        // Revertir el cambio si falló
-        const postId = (action.meta.arg as any).postId;
-        if (postId) {
-          state.likedPosts[postId] = !state.likedPosts[postId];
+        const errorMessage = action.payload as string;
+        state.error = errorMessage;
+        
+        // No revertir automáticamente si el error es un conflicto (409)
+        // El conflicto significa que el estado en la DB ya es el correcto
+        // Solo revertir para otros tipos de errores
+        const isConflictError = 
+          errorMessage?.includes('duplicate') || 
+          errorMessage?.includes('conflict') ||
+          errorMessage?.includes('409');
+        
+        if (!isConflictError) {
+          // Revertir el cambio solo si no es un conflicto
+          const postId = (action.meta.arg as any).postId;
+          if (postId) {
+            state.likedPosts[postId] = !state.likedPosts[postId];
+          }
+        } else {
+          // Para conflictos, sincronizar con la DB (recargar interacciones)
+          // El error se limpiará cuando se recarguen las interacciones
+          state.error = null;
         }
       })
       

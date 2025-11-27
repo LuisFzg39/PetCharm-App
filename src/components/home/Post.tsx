@@ -93,19 +93,38 @@ function Post({
         // Actualizar en Supabase
         const result = await dispatch(togglePostLikeAsync({ postId }));
         
-        // Si falló, revertir el cambio
+        // Si falló (y no es un conflicto 409), revertir el cambio
         if (togglePostLikeAsync.rejected.match(result)) {
-            setLocalIsLiked(isLiked);
-            if (newIsLiked) {
-                dispatch(decrementPostLikes(postId));
+            const errorMessage = result.payload as string;
+            // Los errores 409 (conflict) significan que el like ya existe en la DB
+            // Esto es válido y no debemos revertir
+            const isConflictError = 
+                errorMessage?.includes('duplicate') || 
+                errorMessage?.includes('conflict') ||
+                errorMessage?.includes('409');
+            
+            if (!isConflictError) {
+                // Solo revertir si no es un conflicto
+                setLocalIsLiked(isLiked);
+                if (newIsLiked) {
+                    dispatch(decrementPostLikes(postId));
+                } else {
+                    dispatch(incrementPostLikes(postId));
+                }
             } else {
-                dispatch(incrementPostLikes(postId));
+                // Para conflictos, el thunk ya actualizó el estado correctamente
+                // Solo necesitamos sincronizar el contador de likes desde la DB
+                setTimeout(async () => {
+                    await dispatch(fetchPosts());
+                }, 200);
             }
         } else {
-            // Recargar interacciones del usuario para mantener el estado sincronizado
-            await dispatch(fetchUserInteractions());
-            // Recargar posts para tener los contadores actualizados desde Supabase
-            await dispatch(fetchPosts());
+            // Operación exitosa - el thunk ya actualizó el estado de likedPosts
+            // Solo necesitamos actualizar el contador de likes desde la DB
+            // Usar un pequeño delay para asegurar que la DB se actualizó
+            setTimeout(async () => {
+                await dispatch(fetchPosts());
+            }, 200);
         }
     };
     
