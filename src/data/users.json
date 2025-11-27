@@ -1,0 +1,259 @@
+[
+    {
+    "userName": "valxcicat",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp1.jpg",
+    "userStatus": "meowing 😸",
+    "postImg": "./assets/vectors/img/posts/Post1.jpg",
+    "postCaption": "This is my silly cat! Her name is Strawberry, isn´t she adorable? She´s the cutest!",
+    "likes": 637,
+    "commentsCount": 40,
+    "comments": [
+        {
+        "userName": "Nekocat01",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp8.jpg",
+        "userStatus": "purring 😽",
+        "commentTxt": "Omg, your kitty is the cutest thing I’ve seen today! 😻",
+        "likes": 15
+        },
+        {
+        "userName": "PupVibes",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp9.jpg",
+        "userStatus": "barking 🐶",
+        "commentTxt": "Adorable! What breed is your cat? I’m obsessed 🐾",
+        "likes": 20
+        },
+        {
+        "userName": "SnuggleBuddy",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp5.jpg",
+        "userStatus": "cozy 🐾",
+        "commentTxt": "She looks so precious, I can’t stop smiling 😽✨",
+        "likes": 50
+        }
+    ]
+},
+    {
+    "userName": "Doglover",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp9.jpg",
+    "userStatus": "woofing 🐾",
+    "postImg": "./assets/vectors/img/posts/Post2.jpg",
+    "postCaption": "Sunday walks with Luna 🐶☀️",
+    "likes": 482,
+    "commentsCount": 28,
+    "comments": [
+        {
+        "userName": "ParkBuddy",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp6.jpg",
+        "userStatus": "running 🏃‍♂️",
+        "commentTxt": "Such a happy pup! 🥰",
+        "likes": 18
+        },
+        {
+        "userName": "FetchQueen",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp4.jpg",
+        "userStatus": "playing 🎾",
+        "commentTxt": "The best walking partner ever ❤️",
+        "likes": 22
+        }
+    ]
+},
+    {
+    "userName": "meowchan",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp3.jpg",
+    "userStatus": "sleeping 💤",
+    "postImg": "./assets/vectors/img/posts/Post3.jpg",
+    "postCaption": "Caught her mid-nap, she dreams of tuna 😹",
+    "likes": 890,
+    "commentsCount": 39,
+    "comments": [
+        {
+        "userName": "DreamPaw",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp2.jpg",
+        "userStatus": "napping 🛏️",
+        "commentTxt": "The little tongue sticking out is killing me 😂",
+        "likes": 34
+        },
+        {
+        "userName": "TunaLover",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp10.jpg",
+        "userStatus": "hungry 🐟",
+        "commentTxt": "Dreaming of sushi again, I bet 🍣",
+        "likes": 19
+        }
+    ]
+},
+    {
+    "userName": "whiskerlord",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp4.jpg",
+    "userStatus": "stretching 😼",
+    "postImg": "./assets/vectors/img/posts/Post4.webp",
+    "postCaption": "Morning stretches before chaos 😼💪",
+    "likes": 214,
+    "commentsCount": 17,
+    "comments": [
+        {
+        "userName": "ClawMaster",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp2.jpg",
+        "userStatus": "scratching 🐾",
+        "commentTxt": "Perfect form, 10/10 stretch! 🧘‍♂️",
+        "likes": 12
+        },
+        {
+        "userName": "NapCat",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp8.jpg",
+        "userStatus": "yawning 😴",
+        "commentTxt": "I relate to this energy 😂",
+        "likes": 10
+        }
+    ]
+},
+    {
+    "userName": "bunnyhops",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp5.jpg",
+    "userStatus": "hopping 🐇",
+    "postImg": "./assets/vectors/img/posts/Post5.jpg",
+    "postCaption": "Snack time with some carrots 🥕💚",
+    "likes": 532,
+    "commentsCount": 24,
+    "comments": [
+        {
+        "userName": "VeggiePal",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp10.jpg",
+        "userStatus": "munching 🥦",
+        "commentTxt": "That’s one happy bun! 🐰",
+        "likes": 14
+        },
+        {
+        "userName": "CarrotKing",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp6.jpg",
+        "userStatus": "chewing 🥕",
+        "commentTxt": "Elite snack choice 😋",
+        "likes": 8
+        }
+    ]
+},
+    {
+    "userName": "purrfectly",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp6.jpg",
+    "userStatus": "grooming 🧼",
+    "postImg": "./assets/vectors/img/posts/Post6.jpg",
+    "postCaption": "Spa day, self-care edition 🐱💅",
+    "likes": 721,
+    "commentsCount": 36,
+    "comments": [
+        {
+        "userName": "CleanPaws",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp1.jpg",
+        "userStatus": "sparkling ✨",
+        "commentTxt": "That fur is glowing 😍",
+        "likes": 25
+        },
+        {
+        "userName": "Furball",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp3.jpg",
+        "userStatus": "fluffy ☁️",
+        "commentTxt": "Teach me your skincare routine 😂",
+        "likes": 17
+        }
+    ]
+},
+    {
+    "userName": "chirpyfeathers",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp7.jpg",
+    "userStatus": "singing 🎶",
+    "postImg": "./assets/vectors/img/posts/Post7.jpg",
+    "postCaption": "Just finished my morning song 🌤️🎵",
+    "likes": 308,
+    "commentsCount": 19,
+    "comments": [
+        {
+        "userName": "SkyWatcher",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp6.jpg",
+        "userStatus": "watching 👀",
+        "commentTxt": "Beautiful voice as always 🎤💛",
+        "likes": 16
+        },
+        {
+        "userName": "NestMate",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp4.jpg",
+        "userStatus": "chilling 🪶",
+        "commentTxt": "My favorite morning tune ☕🎶",
+        "likes": 9
+        }
+    ]
+},
+    {
+    "userName": "hammytime",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp3.jpg",
+    "userStatus": "rolling 🛞",
+    "postImg": "./assets/vectors/img/posts/Post8.jpg",
+    "postCaption": "When your wheel is life 😤💪",
+    "likes": 199,
+    "commentsCount": 14,
+    "comments": [
+        {
+        "userName": "SpinMaster",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp2.jpg",
+        "userStatus": "training 🐹",
+        "commentTxt": "Bro’s in grind mode 😂",
+        "likes": 13
+        },
+        {
+        "userName": "Snacky",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp10.jpg",
+        "userStatus": "munching 🍪",
+        "commentTxt": "All that cardio deserves treats 💪🍪",
+        "likes": 11
+        }
+    ]
+},
+    {
+    "userName": "pawsome",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp9.jpg",
+    "userStatus": "wagging 🐕",
+    "postImg": "./assets/vectors/img/posts/Post9.webp",
+    "postCaption": "Beach days are the best days 🌊🐾",
+    "likes": 621,
+    "commentsCount": 33,
+    "comments": [
+        {
+        "userName": "SeaSniffer",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp7.jpg",
+        "userStatus": "splashing 💦",
+        "commentTxt": "That tail wag says it all 😍",
+        "likes": 20
+        },
+        {
+        "userName": "Sandpaw",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp5.jpg",
+        "userStatus": "digging 🏖️",
+        "commentTxt": "Looks like paradise for pups 🐶",
+        "likes": 14
+        }
+    ]
+},
+    {
+    "userName": "midnightmeow",
+    "userPfp": "./assets/vectors/img/profile-pics/Pfp10.jpg",
+    "userStatus": "lurking 🌙",
+    "postImg": "./assets/vectors/img/posts/Post10.jpg",
+    "postCaption": "Late night window gazing 🌌✨",
+    "likes": 410,
+    "commentsCount": 25,
+    "comments": [
+        {
+        "userName": "Starlit",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp1.jpg",
+        "userStatus": "dreaming 🌠",
+        "commentTxt": "So peaceful... I love the vibe 💫",
+        "likes": 18
+        },
+        {
+        "userName": "ShadowPaw",
+        "userPfp": "./assets/vectors/img/profile-pics/Pfp7.jpg",
+        "userStatus": "hiding 🐾",
+        "commentTxt": "The moonlight reflection is purrfect 🌙🐱",
+        "likes": 21
+        }
+    ]
+}
+]
